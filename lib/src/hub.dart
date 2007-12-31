@@ -723,6 +723,7 @@ class Counter{
   }
   
   void untick(){
+    if(_count == 0) return null;
     _count -= 1;
   }
   
