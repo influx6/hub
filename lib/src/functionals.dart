@@ -266,8 +266,8 @@ class Funcs{
     return (n){
       return ([j]){
         return core(n);
-    }
-    }
+      };
+    };
   }
 
   static Function always(n){
