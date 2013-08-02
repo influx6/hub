@@ -1,0 +1,5 @@
+name: hub
+version: 0.0.1
+author: Ewetumo Alexander Adeniyi
+description: a collection of static helpers
+dependencies:
