@@ -28,16 +28,6 @@ class Hub{
 		
 	static final symbolMatch = new RegExp(r'\(|Symbol|\)');
 	
-	static bool isNamed(List<ParameterMirror> a){
-		print(a);
-		for(var i in a){
-			if(!i.isNamed) continue;
-			return true;
-			break;
-		}
-		return false;
-	}
-	
 	static dynamic throwNoSuchMethodError(Invocation n,Object c){
 		throw new NoSuchMethodError(
 			c,
