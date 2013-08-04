@@ -26,6 +26,23 @@ class _SymbolCache{
 
 class Hub{
 		
+	static Future forEachFuture(dynamic a,Function validator){
+		var future;
+		if(a is List){
+			a.forEach((n){
+				if(future != null) future.then(new Future.value(validator(n)));
+				else future = new Future.value(validator(n));
+			});
+		}
+		if(a is Map){
+			a.forEach((n,v){
+				if(future != null) future.then(new Future.value(validator(v)));
+				else future = new Future.value(validator(v));
+			});
+		}
+		return future;
+	}
+		
 	static final symbolMatch = new RegExp(r'\(|Symbol|\)');
 	
 	static dynamic throwNoSuchMethodError(Invocation n,Object c){
@@ -41,8 +58,8 @@ class Hub{
 	}
 		
     static Map encryptNamedArguments(Map params){
-      if(params.isEmpty) return params;
       Map<Symbol,dynamic> p = new Map<Symbol,dynamic>();
+      if(params.isEmpty) return p;
       params.forEach((k,v){
         if(k is! Symbol) p[Hub.encryptSymbol(k)] = v;
         else p[k] = v;
@@ -51,8 +68,8 @@ class Hub{
     }
 	
     static Map decryptNamedArguments(Map params){
-      if(params.isEmpty) return {};
       Map<String,dynamic> o = new Map<String,dynamic>();
+      if(params.isEmpty) return o;
       params.forEach((k,v){
         if(k is String) o[k] = v;
 		else o[Hub.decryptSymbol(k)] = v;
