@@ -1,5 +1,6 @@
 name: hub
 version: 0.0.1
-author: Ewetumo Alexander Adeniyi
+author: Ewetumo Alexander Adeniyi <trinoxf@gmail.com>
+repository: https://github.com/influx6/hub
 description: a collection of static helpers
 dependencies:
