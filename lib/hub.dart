@@ -3,7 +3,6 @@ library hub;
 import 'dart:collection';
 import 'dart:mirrors';
 import 'dart:async';
-// import 'dart:crypto';
 
 class _SymbolCache{
 	var _cache = {};
@@ -24,23 +23,193 @@ class _SymbolCache{
 	String toString() => "SymbolCacheObject";
 }
 
-class Hub{
+class _MapDecorator{
+	final invocations = new Map();
+	
+	static create(){
+		return new _MapDecorator();
+	}
 		
-	static Future forEachFuture(dynamic a,Function validator){
+	_MapDecorator();
+	
+	void add(String key,dynamic val){
+		if(!this.has(key)) this.invocations[key] = val; 
+	}
+		
+	dynamic get(String key){
+		if(this.has(key)) return this.invocations[key];
+		return null;
+	}
+			
+	dynamic destroy(String key){
+		if(!this.has(key)) return null; 
+		return this.invocations.remove(key);		
+	}
+	
+	void update(String key,dynamic val){
+		if(this.has(key)) this.invocations[key] = val;
+	}
+		
+	bool has(String key){
+		if(!this.invocations.containsKey(key)) return false;
+		return true;
+	}
+		
+	void flush(){
+		this.invocations.clear();
+	}
+	
+	String toString(){
+		return this.invocations.toString();
+	}
+
+}
+
+class _SingleLibraryManager{
+	Symbol tag;
+	final ms = currentMirrorSystem();
+	LibraryMirror library;
+	
+	static create(String n,[LibraryMirror lib]){
+		if(lib != null) return new _SingleLibrary.use(n,lib);
+		return new _SingleLibraryManager(n);
+	}
+	
+	_SingleLibraryManager(name){
+		this.tag = Hub.encryptSymbol(name); 
+		this._initLibrary();
+	}
+	
+	_SingleLibraryManager.use(name,LibraryMirror lib){
+		this.tag = Hub.encryptSymbol(name);
+		this.library = lib;
+	}
+	
+	void _initLibrary(){
+		try{
+			var lib = this.ms.findLibrary(this.tag);
+			if(lib == null) throw "Unable to find Library: ${Hub.decryptSymbol(this.tag)}";
+			this.library = lib.single;
+		}catch(e){
+		 	throw "Library Not Found ${this.tag}";
+		}
+	}
+	
+	bool matchClassWithInterface(String className,String interfaceName){
+		var simpleIName = Hub.encryptSymbol(interfaceName);
+		var cl = this.getClass(className);
+		if(cl == null) return false;
+		var  ci = cl.superinterfaces;
+		for(var n in ci){
+			if(n.simpleName != simpleIName) continue;
+			return true;
+			break;
+		}
+		return false;
+	}
+		
+	dynamic getClass(String name){
+		return this.library.classes[Hub.encryptSymbol(name)];
+	}
+	
+	dynamic getSetter(String name){
+		return this.library.setters[Hub.encryptSymbol(name)];
+	}
+		
+	dynamic getGetter(String name){
+		return this.library.getters[Hub.encryptSymbol(name)];	
+	}
+	
+	dynamic getFunction(String name){
+		return this.library.functions[Hub.encryptSymbol(name)];
+	}
+		
+	dynamic getVariable(String name){
+		return this.library.variables[Hub.encryptSymbol(name)];
+	}
+	
+	Map getAllMembers(String name){
+		return this.library.members;
+	}
+			
+	dynamic createClassInstance(String name,{String constructor: null,List pos:null,Map<Symbol,dynamic> named:null}){
+		var cm = this.getClass(name);
+		return cm.newInstance((constructor == null ? name : constructor), pos,named);
+	}
+	
+	
+}
+
+class Hub{
+	
+	static _MapDecorator createMapDecorator(){
+		return new _MapDecorator();
+	}
+		
+	static bool classMirrorInvokeNamedSupportTest(){
+		try{
+			var simpleclass = reflectClass(Map);
+			Map<Symbol,dynamic> named = new Map<Symbol,dynamic>();
+			simpleclass.invoke(new Symbol('toString'),[],named);
+		}on UnimplementedError{
+			return false;
+		}on Exception catch(e){
+			return true;
+		}
+		return true;
+	}
+	
+	static dynamic findClass(libraryName,className){
+		var lib = Hub.singleLibrary(libraryName);
+		return lib.classes[Hub.encryptSymbol(className)];
+	}
+		
+	static _SingleLibraryManager singleLibrary(library){
+		return _SingleLibraryManager.create(library);
+	}
+	
+	static dynamic findLibrary(library){
+		var ms = currentMirrorSystem();
+		var lib = ms.findLibrary(Hub.encryptSymbol(library));
+		if(lib == null) throw "Unable to find Library: $libraryName";
+		return lib;
+	}
+		
+	static Future eachFuture(dynamic a,Function validator){
 		var future;
+		if(a.isEmpty) return new Future.value(true);
 		if(a is List){
 			a.forEach((n){
-				if(future != null) future.then(new Future.value(validator(n)));
+				if(future != null) future.then((_){ return new Future.value(validator(n)); });
 				else future = new Future.value(validator(n));
 			});
 		}
 		if(a is Map){
 			a.forEach((n,v){
-				if(future != null) future.then(new Future.value(validator(v)));
-				else future = new Future.value(validator(v));
+				if(future != null) future.then((_){ return new Future.value(validator(n,v)); });
+				else future = new Future.value(validator(n,v));
 			});
 		}
 		return future;
+	}
+	
+	static Future captureEachFuture(dynamic a,Function validator){
+		var res = [];
+		
+		if(a.isEmpty) return future;
+		
+		if(a is List){
+			a.forEach((n){
+				res.add(new Future.value(validator(n)));
+			});
+		}
+		if(a is Map){
+			a.forEach((n,v){
+				res.add(new Future.value(validator(n,v)));
+			});
+		}
+		
+		return Future.wait(res);
 	}
 		
 	static final symbolMatch = new RegExp(r'\(|Symbol|\)');
@@ -84,4 +253,5 @@ class Hub{
 	static String decryptSymbol(Symbol n){
 		return MirrorSystem.getName(n);
 	}
+	
 }
