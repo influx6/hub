@@ -23,44 +23,47 @@ class _SymbolCache{
 	String toString() => "SymbolCacheObject";
 }
 
-class _MapDecorator{
-	final invocations = new Map();
+class MapDecorator{
+	final storage;
 	
 	static create(){
-		return new _MapDecorator();
+		return new MapDecorator();
 	}
 		
-	_MapDecorator();
+	MapDecorator(): storage = new Map();
+
+	MapDecorator.from(Map a): storage = new Map.from(a);
 	
-	void add(String key,dynamic val){
-		if(!this.has(key)) this.invocations[key] = val; 
-	}
 		
 	dynamic get(String key){
-		if(this.has(key)) return this.invocations[key];
+		if(this.has(key)) return this.storage[key];
 		return null;
 	}
 			
+	void add(String key,dynamic val){
+		if(!this.has(key)) this.storage[key] = val; 
+	}
+
+	void update(String key,dynamic val){
+		if(this.has(key)) this.storage[key] = val;
+	}
+
 	dynamic destroy(String key){
 		if(!this.has(key)) return null; 
-		return this.invocations.remove(key);		
-	}
-	
-	void update(String key,dynamic val){
-		if(this.has(key)) this.invocations[key] = val;
+		return this.storage.remove(key);		
 	}
 		
 	bool has(String key){
-		if(!this.invocations.containsKey(key)) return false;
+		if(!this.storage.containsKey(key)) return false;
 		return true;
 	}
 		
 	void flush(){
-		this.invocations.clear();
+		this.storage.clear();
 	}
 	
 	String toString(){
-		return this.invocations.toString();
+		return this.storage.toString();
 	}
 
 }
@@ -142,8 +145,8 @@ class _SingleLibraryManager{
 
 class Hub{
 	
-	static _MapDecorator createMapDecorator(){
-		return new _MapDecorator();
+	static MapDecorator createMapDecorator(){
+		return new MapDecorator();
 	}
 		
 	static bool classMirrorInvokeNamedSupportTest(){
@@ -226,25 +229,25 @@ class Hub{
 		return new _SymbolCache();
 	}
 		
-    static Map encryptNamedArguments(Map params){
-      Map<Symbol,dynamic> p = new Map<Symbol,dynamic>();
-      if(params.isEmpty) return p;
-      params.forEach((k,v){
-        if(k is! Symbol) p[Hub.encryptSymbol(k)] = v;
-        else p[k] = v;
-      });
-      return p;
-    }
-	
-    static Map decryptNamedArguments(Map params){
-      Map<String,dynamic> o = new Map<String,dynamic>();
-      if(params.isEmpty) return o;
-      params.forEach((k,v){
-        if(k is String) o[k] = v;
-		else o[Hub.decryptSymbol(k)] = v;
-      });
-      return o;
-    }
+  static Map encryptNamedArguments(Map params){
+    Map<Symbol,dynamic> p = new Map<Symbol,dynamic>();
+    if(params.isEmpty) return p;
+    params.forEach((k,v){
+      if(k is! Symbol) p[Hub.encryptSymbol(k)] = v;
+      else p[k] = v;
+    });
+    return p;
+  }
+
+  static Map decryptNamedArguments(Map params){
+    Map<String,dynamic> o = new Map<String,dynamic>();
+    if(params.isEmpty) return o;
+    params.forEach((k,v){
+      if(k is String) o[k] = v;
+  else o[Hub.decryptSymbol(k)] = v;
+    });
+    return o;
+  }
 	
 	static Symbol encryptSymbol(String n){
 		return new Symbol(n);
@@ -254,4 +257,7 @@ class Hub{
 		return MirrorSystem.getName(n);
 	}
 	
+  static String getClassName(Object m){
+		return Hub.decryptSymbol(reflectClass(m).simpleName);
+  }
 }
