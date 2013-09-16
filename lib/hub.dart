@@ -40,12 +40,14 @@ class MapDecorator{
 		return null;
 	}
 			
-	void add(String key,dynamic val){
-		if(!this.has(key)) this.storage[key] = val; 
+	bool add(String key,dynamic val){
+		if(!this.has(key)){ this.storage[key] = val; return true; }
+		return false;
 	}
 
-	void update(String key,dynamic val){
-		if(this.has(key)) this.storage[key] = val;
+	bool update(String key,dynamic val){
+		if(this.has(key)){ this.storage[key] = val; return true; }
+		return false;
 	}
 
 	dynamic destroy(String key){
@@ -57,7 +59,9 @@ class MapDecorator{
 		if(!this.storage.containsKey(key)) return false;
 		return true;
 	}
-		
+	
+	void onAll(Function n) => this.storage.forEach(n);
+	
 	void flush(){
 		this.storage.clear();
 	}
