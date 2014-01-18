@@ -19,6 +19,10 @@ class Transformable{
     this._transformer = n;
   }
 
+  void changeFn(Function n){
+    this._transformer = n;
+  }
+
   void change(dynamic n){
     this._bind = n;
   }
@@ -195,7 +199,7 @@ class Switch{
 }
 
 class Distributor<T>{
-  final listeners = new List();
+  List<Function> listeners = new List<Function>();
   final done = new List<Function>();
   final once = new List<Function>();
   final _removal = new List<Function>();
@@ -231,11 +235,15 @@ class Distributor<T>{
   }
   
   void free(){
-    this.listeners.clear();
+    this.freeListeners();
     this.done.clear();
     this.once.clear();
   }
 
+  void freeListeners(){
+    this.listeners.clear();
+  }
+  
   void emit(T n){
     if(this.locked) return;
     this.fireOncers(n);
@@ -294,7 +302,19 @@ class Distributor<T>{
     this._locked = false;
   }
   
+  List cloneListeners(){
+    return new List<Function>.from(this.listeners);
+  }
+
+  void clearDone(){
+    this.done.clear();
+  }
+
   bool get locked => !!this._locked;
+
+  int get listenersLength => this.listeners.length; 
+  int get doneLength => this.done.length; 
+
 }
 
 class Mutator<T> extends Distributor<T>{
@@ -302,6 +322,14 @@ class Mutator<T> extends Distributor<T>{
     
     Mutator(String id): super(id);
     
+    void replaceTransformersListWith(List<Function> a){
+      this.listeners = a;
+    }
+
+    void updateTransformerListFrom(Mutator m){
+      this.replaceTransformersListWith(m.cloneListeners());
+    }
+
     void emit(T n){
       this.fireListeners(n);
     }
@@ -487,6 +515,8 @@ class Counter{
   num _count = 0;
   dynamic handler;
   
+  static create(n) => new Counter(n);
+
   Counter(this.handler);
   
   num get counter => _count;
@@ -693,7 +723,60 @@ class Hub{
     });
     
   }
-	
+
+	 static void eachAsyncMap(Map a,Function iterator,[Function complete]){
+	    if(a.length <= 0){
+	      if(complete != null) complete(a);
+	      return null;    
+	    }
+	    
+	    var total = a.length;
+	    
+	    a.forEach((f,v){
+	      iterator(v,f,a,(err){
+          if(err){
+            if(complete != null) complete(a);
+            return null;
+          }
+          total -= 1;
+          if(total <= 0){
+            if(complete != null) complete(a);
+            return null;
+          }
+      });  
+    });
+    
+  }
+	 
+  static void eachSyncMap(Map a,Function iterator, [Function complete]){
+    if(a.length <= 0){
+      if(complete != null) complete(a);
+      return null;    
+    }
+    
+    var keys = a.keys.toList();
+    var total = a.length,step = 0,tapper;
+        
+    var fuse = (){
+      var key = keys[step];
+      iterator(a[key],key,a,(err){
+        if(err){
+          if(complete != null) complete(a);
+          return null;
+        }
+        step += 1;
+        if(step == total){
+          if(complete != null) complete(a);
+           return null;
+        }else return tapper();
+      });
+    };
+     
+    tapper = (){ return fuse(); };
+
+    return fuse();
+  }
+  
 	static void eachSync(List a,Function iterator, [Function complete]){
 	  if(a.length <= 0){
       if(complete != null) complete(a);
