@@ -512,14 +512,14 @@ class SingleLibraryManager{
 }
 
 class Counter{
-  num _count = 0;
+  int _count = 0;
   dynamic handler;
   
   static create(n) => new Counter(n);
 
   Counter(this.handler);
   
-  num get counter => _count;
+  int get counter => _count;
   
   void tick(){
     _count += 1;
