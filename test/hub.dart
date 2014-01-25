@@ -78,6 +78,11 @@ void main(){
   assert(sparce.sorted().first == 'john');
   
   var rand = new math.Random();
+  var f = null;
+  
   print(Hub.randomString(3));
- 
+  print(Hub.switchUnless(f,'sucker'));
+  f = 'lunch';
+  print(Hub.switchUnless(f,'sucker'));
+
 }

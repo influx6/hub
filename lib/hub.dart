@@ -841,6 +841,11 @@ class Hub{
 		return Future.wait(res);
 	}
 		
+  static dynamic switchUnless(m,n){
+    if(m == null) return n;
+    return m;
+  }
+
 	static final symbolMatch = new RegExp(r'\(|Symbol|\)');
 	
 	static dynamic throwNoSuchMethodError(Invocation n,Object c){
