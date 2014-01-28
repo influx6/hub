@@ -646,6 +646,16 @@ var _bigA = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N
 
 class Hub{
   
+  static Map merge(Map a,Map b,{bool override: true}){
+    var merged = new Map.from(a);
+    a.forEach((n,k){
+      if(!!override && a.containsKey(n)) merge[n] = k;
+      merge[n] = k;
+    })
+
+    return merged;
+  }
+
   static void cycle(int times,Function fn){
     fn(times);
     if(times > 0) return Hub.cycle((times - 1), fn); 
