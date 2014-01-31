@@ -648,10 +648,10 @@ class Hub{
   
   static Map merge(Map a,Map b,{bool override: true}){
     var merged = new Map.from(a);
-    a.forEach((n,k){
-      if(!!override && a.containsKey(n)) merge[n] = k;
-      merge[n] = k;
-    })
+    b.forEach((n,k){
+      if(!override && !!merged.containsKey(n)) return;
+      merged[n] = k;
+    });
 
     return merged;
   }
