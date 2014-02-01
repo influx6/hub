@@ -75,7 +75,11 @@ class JStripe{
 			return frag(args);
 		};
 	}
-
+  
+	dynamic toDartJSON(JsObject m){
+	  return context['JSON'].callMethod('stringify',[m]);  
+	}
+	
 	dynamic toJS(dynamic m){
 		return new JsObject.jsify(m);
 	}
