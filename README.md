@@ -179,7 +179,7 @@
 		//pause should respond not play
 		man.run('play'); man.run('pause');	
 		
-		//clientside only
+		--------------------------------------------- clientside only-----------------------------------------
 		
 		var strip = JStripe.create(new IFrameElement());
 		//adds the contentWindow attribute of the iframe to the targetable list
