@@ -80,7 +80,26 @@ void main(){
   var rand = new math.Random();
   var f = null;
   
-  print(Hub.merge({'a':1},{'a':4,'b':2},override: false));
+  assert(Hub.merge({'a':1},{'a':4,'b':2},override: false).length == 2);
 
+  assert(Hub.filterValues(Hub.map([1,3,32],(e,i,o) => e*3),(e,i,o){ 
+    if(e%2 == 0) return true; 
+    return false; 
+  })[0] == 96);
+
+  var isString = Hub.createMessageMatcher('isString','is not a string!',(a){
+    if(a is String) return true;
+    return false;
+  });
+  
+  assert(isString('alex') == true);
+  assert(isString(1) is Map);
+  
+  var sum = Hub.dualPartial((a,b) => a+b);
+  var diff = Hub.dualCurry((a,b) => a-b);
+  
+  assert(sum(1)(2) == 3);
+  assert(diff(2)(1) == 1);
+  
 
 }

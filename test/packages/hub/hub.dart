@@ -1009,4 +1009,149 @@ class Hub{
   static String getClassName(Object m){
 		return Hub.decryptSymbol(reflectClass(m).simpleName);
   }
+
+  static Function matchMapConditions([Map<String,Function> sets]){
+    return (r){
+      var future  = new Completer();
+      Hub.eachSyncMap(sets,(e,i,o,fn){
+        var state = e(r);
+        if(!!state) return fn(false);
+        future.completeError(new Exception("Function check at $i failed!"));
+      },(o){
+        future.complete(r);
+      });
+    };
+  }
+  
+  static Function createMessageMatcher(String name,String failmessage,bool n(i)){
+    return (e){
+      if(!!n(e)) return true;
+      return {
+        "name": name,
+        "state": "Failed!",
+        "message": failmessage
+      };   
+    };
+  }
+  
+  static Function matchListConditions([List<Function> sets]){
+    return (r){
+      var future  = new Completer();
+      Hub.eachSync(sets,(e,i,o,fn){
+        var state = e(o);
+        if(!!state) return fn(false);
+        future.completeError(new Exception("Function check at index $i failed!"));
+      },(o){
+        future.complete(r);
+      });
+    };
+  }
+  
+  //returns a future with a map 
+  static Function captureMapConditions([Map<String,Function> sets]){
+    return (r){
+      var errors = {}, future  = new Completer<Map>();
+      Hub.eachSyncMap(sets,(e,i,o,fn){
+        var state = e(r);
+        if(state != true) errors[i] = state; 
+      },(o){
+        future.complete(errors);
+      });
+      return future.future;
+    };
+  }
+
+  static Function captureListConditions([List<Function> sets]){
+    return (r){
+      var errors = [], future  = new Completer<List>();
+      Hub.eachSync(sets,(e,i,o,fn){
+        var state = e(o);
+        if(state != true) errors.add(state);
+      },(o){
+        future.complete(errors);
+      });
+      return future.future;
+    };
+  }
+  
+  static Function compose(Function n,Function m){
+     return (v){
+        return n(m(v));
+     };
+  }
+  
+  static Function dualPartial(Function m){
+      return (e){
+        return (k){
+          return m(e,k);
+        };
+      };
+  }
+  
+  static Function dualCurry(Function m){
+    return (k){
+      return (e){
+        return m(k,e);
+      };
+    };
+  }
+  
+  static List map(dynamic m,Object mod(i,j,k)){
+    var mapped = [];
+    if(m is List){
+      Hub.eachAsync(m,(e,i,o,fn){
+         mapped.add(mod(e,i,o));
+         return fn(false);
+      });
+    }
+
+    if(m is Map){
+      Hub.eachAsyncMap(m,(e,i,o,fn){
+         mapped.add(mod(e,i,o));
+         return fn(false);
+      });
+    }
+    return mapped;
+  }
+
+  static List filterValues(dynamic m,bool mod(i,j,k)){
+    var mapped = [];
+
+    if(m is List){
+      Hub.eachAsync(m,(e,i,o,fn){
+         if(!!mod(e,i,o)) mapped.add(e);
+         return fn(false);
+      });
+    }
+
+    if(m is Map){
+      Hub.eachAsyncMap(m,(e,i,o,fn){
+         if(!!mod(e,i,o)) mapped.add(e);
+         return fn(false);
+      });
+    }
+
+    return mapped;
+  }
+
+  static List filterKeys(dynamic m,bool mod(i,j,k)){
+    var mapped = [];
+
+    if(m is List){
+      Hub.eachAsync(m,(e,i,o,fn){
+         if(!!mod(e,i,o)) mapped.add(i);
+         return fn(false);
+      });
+    }
+
+    if(m is Map){
+      Hub.eachAsyncMap(m,(e,i,o,fn){
+         if(!!mod(e,i,o)) mapped.add(i);
+         return fn(false);
+      });
+    }
+
+    return mapped;
+  }
+  
 }
