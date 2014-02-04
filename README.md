@@ -185,24 +185,37 @@
 		//adds the contentWindow attribute of the iframe to the targetable list
 		strip.fragment('contentWindow');
 		
+		//add a method fragment for the root element i.e the iframe, for the name attribute
+		strip.methodFragment('root','name');
+
 		//add a wrapper for contentWindow.addEventListener but tag it addEvent
 		strip.methodFragment('contentWindow','addEvent','addEventListener');
 		
 		//add a wrapper for contentWindow.addEventListener,no tag hence name it addEventListener
 		strip.methodFragment('contentWindow','addEventListener');
 		
+
+		//run the name tag of the root
+		strip.runOn('root','name')(); => returns the value of name (Iframe.name)
+
 		//run the addEvent tag for contentWindow with arguments [message,Function]
 		strip.runOn('contentWindow','addEvent')(['message',(e){
 			var message = e['data'];
 			print(message);
 		},false]);
 		
-		//run the addEventListener for contentWindow with first argument 'message',then supply argument Function,
+		//run the addEventListener tag for contentWindow with first argument 'message',then supply argument Function,
 		//basically we can supply the first argument of that array above,and just supply a single value to the return function
 		// which turns that into the above ['message',Function]
 		strip.runOn('contentWindow','addEventListener','message')((e){
 			print(e['data']);
 		});
 		
+		//applies also for
+
+		strip.runOn('contentWindow','addEvent','message')((e){
+			var message = e['data'];
+			print(message);
+		},false]);
 
 	
