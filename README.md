@@ -3,6 +3,12 @@
 	a simple library containing static helpers
 
 ####Helpers
+	
+	###### ClientSideOnly:
+	JStripe: provides a object that maps a dart object to JsObject and add functions that bind to values or
+	functions of that JsObject or its inner values
+	
+	##### Both
 	State: provides an object that has a set level of functions that run when activate
 	StateManager: provides a higher level object that uses state objects as a means of manager state
 	Switch: a basic object with a on or off state,allowing to do a truthy or falsy checker
@@ -45,7 +51,7 @@
 	compose: takes two functions and binds the return a new function that binds the return value of one as the input of the other
 	
 ####Example:
-
+		
 	
 		Map<Symbol,dynamic> a = new Map<Symbol,dynamic>();
 		Map<String,dynamic> b = new Map<String,dynamic>();
@@ -172,5 +178,31 @@
 		man.switchState('pause');
 		//pause should respond not play
 		man.run('play'); man.run('pause');	
+		
+		//clientside only
+		
+		var strip = JStripe.create(new IFrameElement());
+		//adds the contentWindow attribute of the iframe to the targetable list
+		strip.fragment('contentWindow');
+		
+		//add a wrapper for contentWindow.addEventListener but tag it addEvent
+		strip.methodFragment('contentWindow','addEvent','addEventListener');
+		
+		//add a wrapper for contentWindow.addEventListener,no tag hence name it addEventListener
+		strip.methodFragment('contentWindow','addEventListener');
+		
+		//run the addEvent tag for contentWindow with arguments [message,Function]
+		strip.runOn('contentWindow','addEvent')(['message',(e){
+			var message = e['data'];
+			print(message);
+		},false]);
+		
+		//run the addEventListener for contentWindow with first argument 'message',then supply argument Function,
+		//basically we can supply the first argument of that array above,and just supply a single value to the return function
+		// which turns that into the above ['message',Function]
+		strip.runOn('contentWindow','addEventListener','message')((e){
+			print(e['data']);
+		});
+		
 
 	
