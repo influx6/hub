@@ -5,50 +5,80 @@
 ####Helpers
 	
 	###### ClientSideOnly:
-	JStripe: provides a object that maps a dart object to JsObject and add functions that bind to values or
-	functions of that JsObject or its inner values
+		JStripe: provides a object that maps a dart object to JsObject and add functions that bind to values or
+		functions of that JsObject or its inner values
 	
 	##### Both
-	State: provides an object that has a set level of functions that run when activate
-	StateManager: provides a higher level object that uses state objects as a means of manager state
-	Switch: a basic object with a on or off state,allowing to do a truthy or falsy checker
-	Distributor: a basic list that accepts functions and then propagates a value to all when its emit method is called
-	Transformable: takes a function and passes all values to that function for mutation
-	SymbolCache: a simple factory of symbols which caches them on creation for reuse
-	MapDecorator: a decorates a map with get,update,destroy calls
-	SingleLibraryManager: allows grabbing a library definition from the current MirrorSystem
-	Counter: a simple class that provides a increment,decrement function calls
-	SparceList: provides a means of adding items into an array at any position,underneath it uses a map,which turns into an array when calling its toList method
-	Mutator: a simple object that takes a set of functions,
-		 where each results from the previous mutates the value used to call the next one.
-	Injector: provides a base class for activation of a routine depending on the truthy or falsy value of
-		a condition function, eg 
-		ListInjector: takes items into array and when the condition set is matched,ejects those values out
-		PostionInjector: injects into specific position of an array and when it matches the required condition,ejects the array
-		LengthInjector: takes values into an array and if length matches its specified value,ejects a new array with the values it received
+		State: provides an object that has a set level of functions that run when activate
+		
+		StateManager: provides a higher level object that uses state objects as a means of manager state
+		
+		Switch: a basic object with a on or off state,allowing to do a truthy or falsy checker
+		
+		Distributor: a basic list that accepts functions and then propagates a value to all when its emit method is called
+		
+		Transformable: takes a function and passes all values to that function for mutation
+		
+		SymbolCache: a simple factory of symbols which caches them on creation for reuse
+		
+		MapDecorator: a decorates a map with get,update,destroy calls
+		
+		SingleLibraryManager: allows grabbing a library definition from the current MirrorSystem
+		
+		Counter: a simple class that provides a increment,decrement function calls
+		
+		SparceList: provides a means of adding items into an array at any position,underneath it uses a map,which turns into an array when calling its toList method
+		
+		Mutator: a simple object that takes a set of functions,
+			 where each results from the previous mutates the value used to call the next one.
+		
+		Injector: provides a base class for activation of a routine depending on the truthy or falsy value of
+			a condition function, eg 
+			ListInjector: takes items into array and when the condition set is matched,ejects those values out
+			PostionInjector: injects into specific position of an array and when it matches the required condition,ejects the array
+			LengthInjector: takes values into an array and if length matches its specified value,ejects a new array with the values it received
 		
 ####Static Helpers
 	map, eachSync,eachAsync,eachSyncMap,eachAsyncMap,filterValues,filterKeys,compose
 	
 	createMessageMatcher: creates a function that checks the truthy state of a function with a value and returns true or a map with a predefined message of failure
+	
 	randomString: takes a number and generates an array containing random strings for each index of the array
+	
 	cycle: runs a function for a specified number of times
+	
 	merge: merges to maps into a new map,a basic union operation,allows values destructions 
+	
 	quickSort: provides a restrictive quicksort algorithm on a list
+	
 	findMiddle: finds the middle value's index in a list of numbers
+	
 	classMirrorInvokeNamedSupportTest: checks wether the current mirror system allows using named arguments
+	
 	findLibrary, findClass: finds a class/library with the mirrorsystem
+	
 	switchUnless: checks if a value is null and switches a default value for it else returns that value
+	
 	encryptNamedArguments: turns a Map<String,dynamic> into a Map<Symbol,dynamic>
+	
 	decryptNamedArguments: turns a Map<Symbol,dynamic> into a Map<String,dynamic>
+	
 	encryptSymbol: turns a string into a symbol
+	
 	decryptSymbol: turns a symbol into a string
+	
 	dualPartial: takes a function and returns a function that awaits 2 values which it then runs on the supplied function,a basic partial for 2 values
+	
 	dualCurry: takes a function and awaits supply of its arguments in a backward(right to left manner), a basic two value curry function
+	
 	matchMapConditions/matchListConditions: takes a set of functions and runs a value on them,returns a future that completes with an error if any condition function fails
+	
 	captureMapConditions/captureListConditions: takes a set of functions and runs a value on them,returning a map/list of the return values for those functions,
 		allows doing a condition matchers that return errors or messages on why a value failed to pass a condition
+	
 	compose: takes two functions and binds the return a new function that binds the return value of one as the input of the other
+	
+	... and much more
 	
 ####Example:
 		

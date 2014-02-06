@@ -82,12 +82,12 @@ void main(){
   
   assert(Hub.merge({'a':1},{'a':4,'b':2},override: false).length == 2);
 
-  assert(Hub.filterValues(Hub.map([1,3,32],(e,i,o) => e*3),(e,i,o){ 
+  assert(Enums.filterValues(Enums.map([1,3,32],(e,i,o) => e*3),(e,i,o){ 
     if(e%2 == 0) return true; 
     return false; 
   })[0] == 96);
 
-  var isString = Hub.createMessageMatcher('isString','is not a string!',(a){
+  var isString = Funcs.createMessageMatcher('isString','is not a string!',(a){
     if(a is String) return true;
     return false;
   });
@@ -95,11 +95,27 @@ void main(){
   assert(isString('alex') == true);
   assert(isString(1) is Map);
   
-  var sum = Hub.dualPartial((a,b) => a+b);
-  var diff = Hub.dualCurry((a,b) => a-b);
+  var sum = Funcs.dualPartial((a,b) => a+b);
+  var diff = Funcs.dualCurry((a,b) => a-b);
   
   assert(sum(1)(2) == 3);
   assert(diff(2)(1) == 1);
   
-
+  var addDouble = Funcs.compose((a){ return a*2; },(a,b){ return a + b; },2);
+  assert(addDouble(1,2) == 6);
+  
+  var indexfor = Enums.indexFor({'a':1, 'b':1,'c':2});
+  assert(indexfor(1).length == 2);
+  
+  assert(Valids.isNot(1,1) == false);
+  
+  var mustbe1 = Funcs.then((n){
+    return n == 1;
+  },(state){
+    assert(!!state);
+  },(state){
+    assert(!state);
+  });
+    
+  mustbe1(2); mustbe1(1);
 }
