@@ -185,61 +185,90 @@ class Enums{
     return merged;
   }
   
-  static List map(dynamic m,Object mod(i,j,k)){
+  static List map(dynamic m,dynamic mod(i,j,k),[Function complete]){
     var mapped = [];
     if(m is List){
       Enums.eachAsync(m,(e,i,o,fn){
          mapped.add(mod(e,i,o));
          return fn(false);
-      });
+      },complete);
     }
 
     if(m is Map){
       Enums.eachAsyncMap(m,(e,i,o,fn){
          mapped.add(mod(e,i,o));
          return fn(false);
-      });
+      },complete);
     }
     return mapped;
   }
-
-  static List filterValues(dynamic m,bool mod(i,j,k)){
+  
+  static dynamic reduce(List m,dynamic mod(m,i,j,k),[dynamic memo,Function complete,bool right]){
+    var set = Valids.isTrue(right) ? m.reversed.toList() : m;
+    Enums.eachAsync(set,(e,i,o,fn){
+      if(memo == null) memo = e;
+      else memo = mod(memo,e,i,o);
+      fn(false);
+    },(o){
+      if(complete != null) complete(memo);
+    });
+    
+    return memo;
+  }
+  
+  static dynamic reduceRight(List m,dynamic mod(m,i,j,k),[dynamic memo,Function complete]){
+    return Enums.reduce(m,mod,memo,complete,true);
+  }
+  
+  static List filterValues(dynamic m,bool mod(i,j,k),[Function complete]){
     var mapped = [];
 
     if(m is List){
       Enums.eachAsync(m,(e,i,o,fn){
          if(!!mod(e,i,o)) mapped.add(e);
          return fn(false);
-      });
+      },complete);
     }
 
     if(m is Map){
       Enums.eachAsyncMap(m,(e,i,o,fn){
          if(!!mod(e,i,o)) mapped.add(e);
          return fn(false);
-      });
+      },complete);
     }
 
     return mapped;
   }
 
-  static List filterKeys(dynamic m,bool mod(i,j,k)){
+  static List filterKeys(dynamic m,bool mod(i,j,k),[Function complete]){
     var mapped = [];
 
     if(m is List){
       Enums.eachAsync(m,(e,i,o,fn){
          if(!!mod(e,i,o)) mapped.add(i);
          return fn(false);
-      });
+      },complete);
     }
 
     if(m is Map){
       Enums.eachAsyncMap(m,(e,i,o,fn){
          if(!!mod(e,i,o)) mapped.add(i);
          return fn(false);
-      });
+      },complete);
     }
 
     return mapped;
   }  
+
+  static List concat(List a,[dynamic m]){
+    var sets = new List.from(a);
+    if(m != null) 
+      Valids.isList(m) ? sets.addAll(m) : sets.add(m);
+    return sets;
+  }
+  
+  static List mapcat(fn,List a,[Function complete]){
+    return Enums.concat(Enums.map(a, fn,complete));
+  }
+
 }

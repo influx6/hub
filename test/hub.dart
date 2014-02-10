@@ -118,4 +118,20 @@ void main(){
   });
     
   mustbe1(2); mustbe1(1);
+  
+  var sum3 = Funcs.applyPartial((a,b,c){ return a+b+c; },3);
+  var sum3r = Funcs.applyCurry((a,b,c){ return a+b+c; },3);
+  assert(sum3(1)(2)(3) == 6);
+  assert(sum3r(3)(2)(1) == 6);
+  
+  var addDoubler = Funcs.applyComposable((a){ return a*2; },(a,{b:null}){ return a + b; });
+  assert(addDoubler([2],{'b':3}) == 10);
+  
+  assert(Enums.reduce([2,7,13],(memo,e,i,o){
+    return memo - e;
+  }) == -18);
+
+  assert(Enums.reduceRight([2,3,32],(memo,e,i,o){
+    return memo - e;
+  }) == 27);
 }

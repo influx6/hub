@@ -32,15 +32,15 @@ class Funcs{
     };
   }
   
-  static Function createMessageMatcher(String name,String failmessage,bool n(i)){
-    return (e){
-      if(!!n(e)) return true;
+  static Function createMessageMatcher(String name,String failmessage,dynamic n,[int i]){
+    return Funcs.compose((bool m){ 
+      if(!!m) return true;
       return {
         "name": name,
         "state": "Failed!",
         "message": failmessage
       };   
-    };
+    },n,i);
   }
   
   //returns a future with a map 
@@ -147,10 +147,17 @@ class Funcs{
             
   }
   
+  static Function applyComposable(Function n,Function m){
+    return (List ops,[Map named]){
+      if(named != null) return n(Function.apply(m,ops,Hub.encryptNamedArguments(named)));
+      return n(Function.apply(m,ops));
+    };
+  }
+
   static Function composable(Function n,Function m,int i,Function reg){
    return Funcs.base10Functionator(reg(n,m), i);
   }
-  
+
   static Function dualPartial(Function m){
       return (e){
         return (k){
@@ -164,6 +171,24 @@ class Funcs{
       return (e){
         return m(k,e);
       };
+    };
+  }
+
+  static Function applyPartial(Function m,int size,[List a]){
+    var list = Funcs.switchUnless(a,new List());
+    return (e){
+      list.add(e);
+      if(list.length <= size) return Funcs.applyPartial(m,size - 1,list);
+      return Function.apply(m,list);
+    };
+  }
+  
+  static Function applyCurry(Function m,int size,[List a]){
+    var list = Funcs.switchUnless(a,new List());
+    return (e){
+      list.add(e);
+      if(list.length <= size) return Funcs.applyCurry(m,size - 1,list);
+      return Function.apply(m,list.reversed.toList());
     };
   }
 
@@ -196,7 +221,7 @@ class Funcs{
     return Funcs.compose((n){ return n;},m,i);
   }
   
-  static always(n){
+  static Function always(n){
     return (){
       return n;
     };
