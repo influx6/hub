@@ -1,5 +1,5 @@
 name: hub
+version: 0.7.1
 author: Ewetumo Alexander Adeniyi <trinoxf@gmail.com>
-version: 0.6.7
-homepage: https://github.com/influx6/hub
 description: a collection of static helpers
+homepage: https://github.com/influx6/hub

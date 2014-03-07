@@ -18,6 +18,10 @@ class Enums{
   static dynamic third(List a){
     return Enums.nth(a,2);
   }
+
+  static dynamic last(List a){
+    return Enums.nth(a,a.length - 1);
+  }
   
   static Function nthFor(dynamic a){
     if(a is List) return (int ind){

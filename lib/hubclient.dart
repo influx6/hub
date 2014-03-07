@@ -1,4 +1,4 @@
-library hub;
+library hubclient;
 
 import 'dart:js';
 import 'package:hub/hub.dart';

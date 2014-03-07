@@ -7,6 +7,7 @@ import 'dart:async';
 part 'validators.dart';
 part 'enums.dart';
 part 'functionals.dart';
+part 'matchers.dart';
 
 Function _empty(t,s){}
 var _smallA = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
@@ -63,6 +64,10 @@ class State{
     return this.states.destroy(n);
   }
 
+  vid close(){
+     this.states.flush();
+  }
+  
   bool get activated => !!this._active;
   bool get deactivated => !this._active;
   
@@ -77,6 +82,11 @@ class StateManager{
     
     StateManager(this.target){
       this.store = Hub.createMapDecorator();
+    }
+    
+    void close(){
+     this.store.onAll((e,k){ k.close(); });
+     this.store.flush();
     }
     
     void add(String name,dynamic m){
@@ -305,6 +315,12 @@ class Switch{
     return this._state == 1;
   }
 
+  void close(){
+    this.onOff.clear();
+    this.onOn.clear();
+    this._state = -1;
+  }
+
 }
 
 class Distributor<T>{
@@ -503,18 +519,19 @@ class MapDecorator{
 		if(this.has(key)) return this.storage[key];
 	}
 			
-	bool add(String key,dynamic val){
-		if(!this.has(key)){ this.storage[key] = val; return true; }
-		return false;
+	void add(String key,dynamic val){
+		if(this.has(key)) return null;
+    this.storage[key] = val;
 	}
 
-	bool update(String key,dynamic val){
-		if(this.has(key)){ this.storage[key] = val; return true; }
-		return false;
+	void update(String key,dynamic val){
+		if(this.has(key)){ this.storage[key] = val; return null; }
+    else this.add(key,val);
+		return null;
 	}
 
-  bool updateKey(String key,String newKey){
-    if(!this.has(key)) return false;
+  void updateKey(String key,String newKey){
+    if(!this.has(key)) return null;
     var val = this.get(key);
     this.destroy(key);
     this.add(newKey,val);
