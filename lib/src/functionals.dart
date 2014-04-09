@@ -2,6 +2,35 @@ part of hub;
 
 class Funcs{
     
+  static Function matchFunctionalCondition(dynamic n){
+    if(n is List) return Funcs.matchListFunctionalCondition(n);
+    if(n is Map) return Funcs.matchMapFunctionalCondition(n);
+  }
+
+  static Function matchListFunctionalCondition(List<Function> n){
+    bool state;
+    return (k){
+      Enums.eachSync(n,(e,i,o,fn){ 
+        state = e(k);
+        if(state != false) return fn(false);
+        fn(true);
+      });
+      return state;
+    };
+  }
+
+  static Function matchMapFunctionalCondition(Map<String,Function> n){
+    bool state;
+    return (k){
+      Enums.eachSyncMap(n,(e,i,o,fn){ 
+        state = e(k);
+        if(state != false) return fn(false);
+        fn(true);
+      });
+      return state;
+    };
+  }
+
   static Function matchMapConditions([Map<String,Function> sets]){
     return (r){
       var future  = new Completer();
@@ -76,7 +105,7 @@ class Funcs{
     };
   }
   
-  static Funcstion captureConditions(dynamic n){
+  static Function captureConditions(dynamic n){
      if(n is List) return Funcs.captureListCondition(n);
      return Funcs.captureMapConditions(n);
   }
