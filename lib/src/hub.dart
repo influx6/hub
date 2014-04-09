@@ -484,6 +484,46 @@ class Mutator<T> extends Distributor<T>{
     
 }
 
+class ConditionMutator<T> extends Distributor<T>{
+    final List history = new List();
+    
+    ConditionMutator(String id): super(id);
+    
+    void replaceTransformersListWith(List<Function> a){
+      this.listeners = a;
+    }
+
+    void updateTransformerListFrom(Mutator m){
+      this.replaceTransformersListWith(m.cloneListeners());
+    }
+
+    void emit(T n){
+      this.fireListeners(n);
+    }
+    
+    void fireListeners(T n){
+      var history = new List();
+      history.add(n);
+      
+      var done = (k){
+        this.fireDone(history.last);
+        this.fireOncers(history.last);
+        history.clear();
+      };
+      
+      Hub.eachAsync(this.listeners,(e,i,o,fn){
+          var cur = history.last;
+          var ret = e(cur);
+          if(ret == null) return false(true);
+          history.add(history.isEmpty ? cur : ret);
+          fn(false);
+      },done);
+        
+      
+    }
+    
+}
+
 class SymbolCache{
 	var _cache = {};
 	
