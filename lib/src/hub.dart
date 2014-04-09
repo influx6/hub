@@ -515,7 +515,7 @@ class ConditionMutator<T> extends Distributor<T>{
           var cur = history.last;
           var ret = e(cur);
           if(ret == null) return false(true);
-          history.add(history.isEmpty ? cur : ret);
+          if(history.last != ret) history.add(history.isEmpty ? cur : ret);
           fn(false);
       },done);
         
