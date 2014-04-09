@@ -57,7 +57,7 @@ class Enums{
 
   static void eachAsync(List a,Function iterator,[Function complete]){
     if(a.length <= 0){
-      if(complete != null) complete(a);
+      if(complete != null) complete(a,null);
       return null;    
     }
     
@@ -65,13 +65,13 @@ class Enums{
     
     a.forEach((f){
       iterator(f,i,a,(err){
-          if(err){
-            if(complete != null) complete(a);
+          if(err != null){
+            if(complete != null) complete(a,err);
             return null;
           }
           total -= 1;
           if(total <= 0){
-            if(complete != null) complete(a);
+            if(complete != null) complete(a,null);
             return null;
           }
       });  
@@ -82,7 +82,7 @@ class Enums{
 
    static void eachAsyncMap(Map a,Function iterator,[Function complete]){
       if(a.length <= 0){
-        if(complete != null) complete(a);
+        if(complete != null) complete(a,null);
         return null;    
       }
       
@@ -90,13 +90,13 @@ class Enums{
       
       a.forEach((f,v){
         iterator(v,f,a,(err){
-          if(err){
-            if(complete != null) complete(a);
+          if(err != null){
+            if(complete != null) complete(a,err);
             return null;
           }
           total -= 1;
           if(total <= 0){
-            if(complete != null) complete(a);
+            if(complete != null) complete(a,null);
             return null;
           }
       });  
@@ -106,7 +106,7 @@ class Enums{
    
   static void eachSyncMap(Map a,Function iterator, [Function complete]){
     if(a.length <= 0){
-      if(complete != null) complete(a);
+      if(complete != null) complete(a,null);
       return null;    
     }
     
@@ -116,13 +116,13 @@ class Enums{
     var fuse = (){
       var key = keys[step];
       iterator(a[key],key,a,(err){
-        if(err){
-          if(complete != null) complete(a);
+        if(err != null){
+          if(complete != null) complete(a,err);
           return null;
         }
         step += 1;
         if(step == total){
-          if(complete != null) complete(a);
+          if(complete != null) complete(a,null);
            return null;
         }else return tapper();
       });
@@ -135,7 +135,7 @@ class Enums{
   
   static void eachSync(List a,Function iterator, [Function complete]){
     if(a.length <= 0){
-      if(complete != null) complete(a);
+      if(complete != null) complete(a,null);
       return null;    
     }
     
@@ -143,13 +143,13 @@ class Enums{
         
     var fuse = (){
       iterator(a[step],step,a,(err){
-        if(err){
-          if(complete != null) complete(a);
+        if(err != null){
+          if(complete != null) complete(a,err);
           return null;
         }
         step += 1;
         if(step == total){
-          if(complete != null) complete(a);
+          if(complete != null) complete(a,null);
            return null;
         }else return tapper();
       });
@@ -213,7 +213,7 @@ class Enums{
       if(memo == null) memo = e;
       else memo = mod(memo,e,i,o);
       fn(false);
-    },(o){
+    },(o,err){
       if(complete != null) complete(memo);
     });
     

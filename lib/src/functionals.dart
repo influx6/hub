@@ -12,7 +12,7 @@ class Funcs{
     return (k){
       Enums.eachSync(n,(e,i,o,fn){ 
         state = e(k);
-        if(state != false) return fn(false);
+        if(state != false) return fn(null);
         fn(true);
       });
       return state;
@@ -24,7 +24,7 @@ class Funcs{
     return (k){
       Enums.eachSyncMap(n,(e,i,o,fn){ 
         state = e(k);
-        if(state != false) return fn(false);
+        if(state != false) return fn(null);
         fn(true);
       });
       return state;
@@ -38,7 +38,7 @@ class Funcs{
         var state = e(r);
         if(!!state) return fn(false);
         future.completeError(new Exception("Function check at $i failed!"));
-      },(o){
+      },(o,err){
         future.complete(r);
       });
       
@@ -53,7 +53,7 @@ class Funcs{
         var state = e(o);
         if(!!state) return fn(false);
         future.completeError(new Exception("Function check at index $i failed!"));
-      },(o){
+      },(o,err){
         future.complete(r);
       });
       
@@ -85,7 +85,7 @@ class Funcs{
       Enums.eachSyncMap(sets,(e,i,o,fn){
         var state = e(r);
         if(state != true) errors[i] = state; 
-      },(o){
+      },(o,err){
         future.complete(errors);
       });
       return future.future;
@@ -98,7 +98,7 @@ class Funcs{
       Enums.eachSync(sets,(e,i,o,fn){
         var state = e(o);
         if(state != true) errors.add(state);
-      },(o){
+      },(o,err){
         future.complete(errors);
       });
       return future.future;

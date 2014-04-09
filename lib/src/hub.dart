@@ -381,8 +381,8 @@ class Distributor<T>{
     this._switch.switchOn();
     Hub.eachAsync(this.listeners,(e,i,o,fn){
       e(n);
-      fn(false);
-    },(o){
+      fn(null);
+    },(o,err){
       this.fireDone(n);
       this._switch.switchOff();
       this._fireRemoval(n);
@@ -393,8 +393,8 @@ class Distributor<T>{
     if(this.once.length <= 0) return null;
     Hub.eachAsync(this.once,(e,i,o,fn){
       e(n);
-      fn(false);
-    },(o){
+      fn(null);
+    },(o,err){
       this.once.clear();
     });
   }
@@ -403,7 +403,7 @@ class Distributor<T>{
     if(this.done.length <= 0) return;
     Hub.eachAsync(this.done,(e,i,o,fn){
       e(n);
-      fn(false);
+      fn(null);
     });
   }
   
@@ -411,7 +411,7 @@ class Distributor<T>{
     if(this._removal.length <= 0 || this._switch.on()) return;
     Hub.eachAsync(this._removal,(e,i,o,fn){
       e(n);
-      fn(false);
+      fn(null);
     });
   }
 
@@ -463,7 +463,7 @@ class Mutator<T> extends Distributor<T>{
       var history = new List();
       history.add(n);
       
-      var done = (k){
+      var done = (k,e){
         this.fireDone(history.last);
         this.fireOncers(history.last);
         history.clear();
@@ -476,7 +476,7 @@ class Mutator<T> extends Distributor<T>{
             (history.isEmpty ? history.add(cur) : 
               (!history.isEmpty && history.last != cur ? history.add(cur) : null));
           }else history.add(ret);
-          fn(false);
+          fn(null);
       },done);
         
       
@@ -484,44 +484,75 @@ class Mutator<T> extends Distributor<T>{
     
 }
 
-class ConditionMutator<T> extends Distributor<T>{
+class Condition<T>{
     final List history = new List();
+    final List conditions = new List();
+    final List done = new List();
+    final List once = new List();
     
-    ConditionMutator(String id): super(id);
-    
-    void replaceTransformersListWith(List<Function> a){
-      this.listeners = a;
+    static create(n) => new Condition(n);
+
+    Condition(String id);
+
+    void on(bool n(dynamic l)){
+      if(this.conditions.contains(n)) return null;
+      this.conditions.add(n);
     }
 
-    void updateTransformerListFrom(Mutator m){
-      this.replaceTransformersListWith(m.cloneListeners());
+    void off(Function n){
+      if(!this.conditions.contains(n)) return null;
+      this.conditions.remove(n);
+    }
+    
+    void whenDone(Function n){
+      this.done.add(n);
+    }
+
+    void onOnce(Function n){
+      this.once.add(n);
     }
 
     void emit(T n){
-      this.fireListeners(n);
+     this.fireConditions(n);
     }
-    
-    void fireListeners(T n){
-      var history = new List();
-      history.add(n);
-      
-      var done = (k){
-        this.fireDone(history.last);
-        this.fireOncers(history.last);
-        history.clear();
-      };
-      
-      Hub.eachAsync(this.listeners,(e,i,o,fn){
-          var cur = history.last;
-          var ret = e(cur);
-          if(ret == null) return false(true);
-          if(history.last != ret) history.add(history.isEmpty ? cur : ret);
-          fn(false);
-      },done);
-        
-      
+
+    void fireConditions(n){
+      Enums.eachSync(this.conditions,(e,i,o,fn){
+        if(!!e(n)) return fn(null);
+        return fn(new Exception('failed'));
+      },(g,err){
+        if(err is Exception) return null;
+        this.fireOnce(n);
+        this.fireDone(n);
+      });
     }
+
+    void fireDone(n){
+      Enums.eachSync(this.done,(e,i,o,fn){
+        e(n);
+        fn(null);
+      });
+    }
+
+    void fireOnce(n){
+      Enums.eachSync(this.once,(e,i,o,fn){
+        e(n);
+        fn(null);
+      },(r,o){
+          this.once.clear();
+      });
+    }
+
+    void clearDone() => this.once.clear();
+    void clearConditions() => this.conditions.clear();
+    void clearOnce() => this.once.clear();
     
+    void clear(){
+        this.clearOnce();
+        this.clearConditions();
+        this.clearOnce();
+    }
+
 }
 
 class SymbolCache{
@@ -747,6 +778,11 @@ class Hub{
   static Counter createCounter(h){
     return new Counter(h);
   }
+  
+  static Condition createCondition(n){
+      return Condition.create(n);
+  }
+
   static ListInjector createListInjector(max,[f,g]){
     return ListInjector.create(max,f,g);  
   }
@@ -872,7 +908,7 @@ class Hub{
     return Enums.eachAsyncMap(a, iterator,complete);
   }
 	 
-  static void eachSyncMap(Map a,Function iterator, [Function complete]){
+static void eachSyncMap(Map a,Function iterator, [Function complete]){
     return Enums.eachSyncMap(a, iterator,complete);
   }
   

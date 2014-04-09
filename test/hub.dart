@@ -134,4 +134,15 @@ void main(){
   assert(Enums.reduceRight([2,3,32],(memo,e,i,o){
     return memo - e;
   }) == 27);
+
+  var condition = Hub.createCondition('test');
+
+  condition.on(Valids.exist);
+  condition.on((n){ return Valids.match(n,'1'); });
+  condition.on(Valids.isString);
+  condition.whenDone((n){ assert(n == '1'); });
+  condition.onOnce((n){ assert(n == '1'); });
+  condition.emit('1');
+  condition.emit(1);
+
 }
