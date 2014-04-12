@@ -261,6 +261,14 @@ class Funcs{
     return Funcs.compose((n){ return n;},m,i);
   }
   
+  static Function alwaysEffect(Function m,[int i]){
+    var core = Funcs.effect(m,i);
+    return (n){
+      return ([j]){
+        return core(n);
+    }
+  }
+
   static Function always(n){
     return (){
       return n;
