@@ -20,5 +20,10 @@ class Valids{
   static Function isTrue = (a){ return (Valids.isBool(a) && a == true); };
   static Function isFalse = (a){ return (Valids.isBool(a) && a == false); };
 
-  
+  static Function lessThan(x,m) => x < m;
+  static Function lessThanEqual(x,m) => x <= m;
+
+  static Function greaterThan(x,m) => x > m;
+  static Function greaterThanEqual(x,m) => x >= m;
+
 }

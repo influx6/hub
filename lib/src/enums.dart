@@ -2,6 +2,80 @@ part of hub;
 
 class Enums{
   
+  static max(a,b) => Enums.comparator(a,b,(a,b) => a > b);
+  static min(a,b) => Enums.comparator(a,b,(a,b) => a < b);
+  static dynamic maxFor(List a,[num s,num e]) => Enums.compareBy(a,(c,a) => c > a,s,e);
+  static dynamic minFor(List a,[num s,num e]) => Enums.compareBy(a,(c,a) => c < a,s,e);
+
+  static dynamic compareEngineProcessor(List a,bool compare(g,b),[num start,num end,dynamic c,bool started]){
+    start = Funcs.switchUnless(start,0);
+    end = Funcs.switchUnless(end,a.length - 1);
+    
+    var cur = Funcs.switchUnless(c,a[start]);
+
+    if(!started && end <= start) end = start + end;
+    if(end >= a.length) end = a.length - 1;
+    if(start <= -1) start = (start + a.length);
+
+    if(start > end) return cur;
+
+    var sd = a[start], ed = a[end];
+
+    //if(!compare(cur,a[start])) cur = a[start];
+    if(compare(sd,ed)){
+      if(compare(sd,cur)) cur = sd;
+    }else{
+      if(compare(ed,cur)) cur = ed;
+    }
+
+    return Enums.compareEngineProcessor(a,compare,start += 1,end -= 1,cur,true);
+  }
+
+  static dynamic compareEngine(List a,bool c(g,b),[num s,num e]){
+    return Enums.compareEngineProcessor(a,c,s,e);
+  }
+
+  static dynamic comparator(a,b,Function comparator){
+    return (comparator(a,b) ? a : b);
+  }
+
+  static dynamic compareBy(a, bool m(a,b),[num start,num end]){
+    return Enums.compareEngine(a,m,start,end);
+  }
+
+  static List heapEngine(List a,num start,num length,Function maxCompare,Function minCompare,[List sorted,num lt,num st,bool isUp]){
+    
+    sorted = Funcs.switchUnless(sorted,Funcs.range(a.length));
+    lt = Funcs.switchUnless(lt,0);
+    st = Funcs.switchUnless(st,a.length - 1);
+
+    if(a.isEmpty) return sorted;
+
+    var q = isUp ? a : new List.from(a),max,min;
+
+    if(q.length == 1){
+      sorted[st] = q.removeAt(0);
+      return sorted;
+    }else{
+
+      min = sorted[st] = Enums.compareBy(q,minCompare,start,length);
+      max = sorted[lt] = Enums.compareBy(q,maxCompare,start,length);
+
+      q.remove(max);
+      q.remove(min);
+
+    }
+
+    lt += 1;
+    st -= 1;
+
+    return Enums.heapEngine(q,start,length,maxCompare,minCompare,sorted,lt,st,true);
+  }
+
+  static List heapSort(List a,Function compare,[num start,num end]){
+    return Enums.heapEngine(a,start,end,compare,Funcs.negate(compare,2));
+  }
+
   static dynamic nth(List a,int ind){
     if(ind >= a.length) return null;
     return a[ind];  
@@ -224,6 +298,12 @@ class Enums{
     return Enums.reduce(m,mod,memo,complete,true);
   }
   
+  static List filterItem(dynamic m,dynamic item){
+    return Enums.filterValues(m,(e,i,k){
+      return e == item;
+    });
+  }
+
   static List filterValues(dynamic m,bool mod(i,j,k),[Function complete]){
     var mapped = [];
 

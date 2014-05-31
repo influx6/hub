@@ -1,7 +1,89 @@
 part of hub;
 
 class Funcs{
-    
+
+  static bool futureBind(){
+    var ftrue = Funcs.alwaysTrue();
+    var ffalse = Funcs.alwaysFalse();
+    bool val = false;
+    return ([bool n]){
+      if(Valids.exist(n)) val = n;
+      return !!val ? ftrue() : ffalse();
+    };
+  }
+
+  static Function defferedReply(Function before,Function after){
+    return ([n]){
+      if(!Valids.exist(n)) return before(n);
+      return after(n);
+    };
+  }
+
+  static Function alwaysTrue(){
+    return (){ return true; };
+  }
+
+  static Function alwaysFalse(){
+    return (){ return false; };
+  }
+  
+  static Function singleDiscard(Function n){
+    return (m){
+      return n();
+    };
+  }
+
+  static Function debugLog(Function check){
+    return (tag,n){
+      if(!check()) return null;
+      return Funcs.debugOn(tag,n);
+    };
+  }
+
+  static Function defferedDebugLog(Function check){
+    return (tag,Function op,[num sx,String format,Function n,Function p]){
+      p = Funcs.switchUnless(p,Funcs.identity);
+      var initr = (message){
+        return Funcs.tagPrint(tag,op,sx,format,n,Funcs.compose(p,(s){
+          return s.replaceAll('{message}',message);
+        }));
+      };
+
+      var fallback = Funcs.compose(Funcs.identity,op,sx);
+
+      return ([String message]){
+        if(!check()) return fallback;
+        message = Funcs.switchUnless(message,"");
+        initr = initr(message);
+        return initr;
+      };
+    };
+  }
+
+  static Function debugOn(String tag,dynamic n){
+    return Funcs.tagPrint(tag,Funcs.identity)(n);
+  }
+
+  static Function debugFor(String tag){
+    return Funcs.dualPartial(Funcs.tagPrint)(tag);
+  }
+
+  static Function debug = Funcs.tagPrint('#debug',Funcs.identity);
+
+  static Function tagPrint(String tag,Function n,[num sx,String format,Function nprinter,Function prettier]){
+    format = Funcs.switchUnless(format,"{tag} -> {res}");
+    prettier = Funcs.switchUnless(prettier,Funcs.identity);
+    var fp = Funcs.switchUnless(nprinter,print);
+    return Funcs.compose((n){
+      fp(prettier(format).toString().replaceAll('{tag}',tag).replaceAll('{res}',n.toString()));
+      return n;
+    },n,sx);
+  }
+
+  static Function identity(n){
+      return n;
+  }
+
   static Function matchFunctionalCondition(dynamic n){
     if(n is List) return Funcs.matchListFunctionalCondition(n);
     if(n is Map) return Funcs.matchMapFunctionalCondition(n);
@@ -194,6 +276,7 @@ class Funcs{
     };
   }
 
+
   static Function composable(Function n,Function m,int i,Function reg){
    return Funcs.base10Functionator(reg(n,m), i);
   }
@@ -232,10 +315,26 @@ class Funcs{
     };
   }
 
+  static List range(int n,[bool fill]){
+    var rg = [];
+    Funcs.cycle(n,(t){
+      rg.add( fill ? ((n-t)+1) : null);
+    });
+    return rg;
+  }
+
+  static List rangeFill(int n,[dynamic j]){
+    var rg = [];
+    Funcs.cycle(n,(t){
+      rg.add( Valids.exist(j) ? j : null);
+    });
+    return rg;
+  }
+
   static void cycle(int times,Function fn){
+    if(times <= 0) return null;
     fn(times);
-    if(times > 0) return Funcs.cycle((times - 1), fn); 
-    return null;
+    return Funcs.cycle((times - 1), fn); 
   }
   
   static dynamic switchUnless(m,n){
@@ -289,5 +388,8 @@ class Funcs{
         };
      };
   }
-  
+
+  static Function negate(Function m,[num sx]){
+    return Funcs.compose((n){ return !n; },m,sx);
+  }
 }
