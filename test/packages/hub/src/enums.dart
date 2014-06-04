@@ -129,28 +129,38 @@ class Enums{
     return null;       
   }
 
-  static void eachAsync(List a,Function iterator,[Function complete]){
+  static void eachSync(dynamic n,Function it,[Function c]){
+    if(n is Map) return Enums.eachSyncMap(n,it,c);
+    if(n is List) return Enums.eachSyncList(n,it,c);
+  }
+
+  static void eachAsync(dynamic n,Function it,[Function c]){
+    if(n is Map) return Enums.eachAsyncMap(n,it,c);
+    if(n is List) return Enums.eachAsyncList(n,it,c);
+  }
+
+  static void eachAsyncList(List a,Function iterator,[Function complete]){
     if(a.length <= 0){
       if(complete != null) complete(a,null);
       return null;    
     }
     
-    var total = a.length,i = 0;
+    var kill = false,total = a.length,i = 0;
     
-    a.forEach((f){
-      iterator(f,i,a,(err){
-          if(err != null){
-            if(complete != null) complete(a,err);
-            return null;
-          }
-          total -= 1;
-          if(total <= 0){
-            if(complete != null) complete(a,null);
-            return null;
-          }
-      });  
-      i += 1;
-    });
+    for(i = 0; i < total; i++){
+        if(kill) break;
+        iterator(a[i],i,a,(err){
+            if(err != null){
+              if(complete != null) complete(a,err);
+              kill = true;
+              return null;
+            }
+            if(i >= total){
+              if(complete != null) complete(a,null);
+              return null;
+            }
+        });  
+    }
     
   }
 
@@ -160,12 +170,15 @@ class Enums{
         return null;    
       }
       
-      var total = a.length;
+      var kill = false,total = a.length,
+          keys = a.keys.toList();
       
-      a.forEach((f,v){
-        iterator(v,f,a,(err){
+      for(var f in keys){
+        if(kill) break;
+        iterator(a[f],f,a,(err){
           if(err != null){
             if(complete != null) complete(a,err);
+            kill = true;
             return null;
           }
           total -= 1;
@@ -174,7 +187,8 @@ class Enums{
             return null;
           }
       });  
-    });
+
+      };
     
   }
    
@@ -207,7 +221,7 @@ class Enums{
     return fuse();
   }
   
-  static void eachSync(List a,Function iterator, [Function complete]){
+  static void eachSyncList(List a,Function iterator, [Function complete]){
     if(a.length <= 0){
       if(complete != null) complete(a,null);
       return null;    
@@ -268,14 +282,14 @@ class Enums{
     if(m is List){
       Enums.eachAsync(m,(e,i,o,fn){
          mapped.add(mod(e,i,o));
-         return fn(false);
+         return fn(null);
       },complete);
     }
 
     if(m is Map){
       Enums.eachAsyncMap(m,(e,i,o,fn){
          mapped.add(mod(e,i,o));
-         return fn(false);
+         return fn(null);
       },complete);
     }
     return mapped;
@@ -286,7 +300,7 @@ class Enums{
     Enums.eachAsync(set,(e,i,o,fn){
       if(memo == null) memo = e;
       else memo = mod(memo,e,i,o);
-      fn(false);
+      fn(null);
     },(o,err){
       if(complete != null) complete(memo);
     });
@@ -310,14 +324,14 @@ class Enums{
     if(m is List){
       Enums.eachAsync(m,(e,i,o,fn){
          if(!!mod(e,i,o)) mapped.add(e);
-         return fn(false);
+         return fn(null);
       },complete);
     }
 
     if(m is Map){
       Enums.eachAsyncMap(m,(e,i,o,fn){
          if(!!mod(e,i,o)) mapped.add(e);
-         return fn(false);
+         return fn(null);
       },complete);
     }
 
@@ -330,14 +344,14 @@ class Enums{
     if(m is List){
       Enums.eachAsync(m,(e,i,o,fn){
          if(!!mod(e,i,o)) mapped.add(i);
-         return fn(false);
+         return fn(null);
       },complete);
     }
 
     if(m is Map){
       Enums.eachAsyncMap(m,(e,i,o,fn){
          if(!!mod(e,i,o)) mapped.add(i);
-         return fn(false);
+         return fn(null);
       },complete);
     }
 

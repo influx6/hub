@@ -30,4 +30,6 @@ void main(){
 
     Funcs.debugOn('heapSort',Enums.heapSort(set,(n,m) => n < m));
     Funcs.debugOn('heapSort',Enums.heapSort(test,(n,m) => n > m));
+
+
 }
