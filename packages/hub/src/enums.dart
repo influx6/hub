@@ -155,11 +155,11 @@ class Enums{
               kill = true;
               return null;
             }
-            if(i >= total){
+            if(i >= total - 1){
               if(complete != null) complete(a,null);
               return null;
             }
-        });  
+        }); 
     }
     
   }
@@ -312,6 +312,23 @@ class Enums{
     return Enums.reduce(m,mod,memo,complete,true);
   }
   
+  static dynamic indexesOf(List a,Function fn){
+    return Enums.filterKeys(a,(e,i,o){ if(fn(e)) return true; return false; });
+  }
+
+  static dynamic yankOn(List a,Function m){
+    Enums.indexesOf(a,m).forEach((f){ a.removeAt(f); });
+    return a;
+  }
+
+  static dynamic yankBy(List a,dynamic n){
+    return Enums.yankOn(a,(e) => Valids.match(e,n));
+  }
+
+  static dynamic yank(List a,dynamic m){
+    return Enums.yankOn(new List.from(a),(e) => Valids.match(e,m));
+  }
+
   static List filterItem(dynamic m,dynamic item){
     return Enums.filterValues(m,(e,i,k){
       return e == item;
