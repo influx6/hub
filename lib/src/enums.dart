@@ -316,6 +316,16 @@ class Enums{
     return Enums.filterKeys(a,(e,i,o){ if(fn(e)) return true; return false; });
   }
 
+  static dynamic yankValues(List a,dynamic m){
+    return Enums.yankValuesOn(a,(r) => Valids.match(r,m));
+  }
+
+  static dynamic yankValuesOn(List a,Function m){
+    var yanked = [], index = Enums.indexesOf(a,m);
+    index.forEach((f){ yanked.add(a[f]); a.removeAt(f); });
+    return yanked;
+  }
+
   static dynamic yankOn(List a,Function m){
     Enums.indexesOf(a,m).forEach((f){ a.removeAt(f); });
     return a;
