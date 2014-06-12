@@ -480,7 +480,19 @@ class MapDecorator{
     dynamic get(String key){
       if(this.has(key)) return this.storage[key];
     }
-              
+    
+    void addAll(MapDecorator m){
+      m.onAll((n,k){
+        this.add(n,k);
+      });
+    }
+
+    void updateAll(MapDecorator m){
+      m.onAll((n,k){
+        this.update(n,k);
+      });
+    }
+
     void add(String key,dynamic val){
       if(this.has(key)) return null;
       this.storage[key] = val;
@@ -529,6 +541,10 @@ class MapDecorator{
     int get keyLength => this.storage.keys.toList().length;
     int get valuesLength => this.storage.values.toList().length;
     int get length => this.storage.length;
+
+    bool get isEmpty => this.storage.isEmpty;
+
+    Map get core => this.storage;
 
 }
 

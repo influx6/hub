@@ -17,8 +17,8 @@ class Valids{
   static bool isList(a) => a is List;
   static bool exist(a) => Valids.not(Valids.match(a,null));
   static bool notExist(a){ return Valids.not(Valids.exist(a)); }
-  static Function isTrue = (a){ return (Valids.isBool(a) && a == true); };
-  static Function isFalse = (a){ return (Valids.isBool(a) && a == false); };
+  static bool isTrue(a){ return (Valids.isBool(a) && a == true); }
+  static bool isFalse(a){ return (Valids.isBool(a) && a == false); }
 
   static Function lessThan(x,m) => x < m;
   static Function lessThanEqual(x,m) => x <= m;

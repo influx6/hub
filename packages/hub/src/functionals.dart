@@ -2,6 +2,7 @@ part of hub;
 
 class Funcs{
 
+
   static bool futureBind(){
     var ftrue = Funcs.alwaysTrue();
     var ffalse = Funcs.alwaysFalse();
@@ -57,6 +58,16 @@ class Funcs{
         initr = initr(message);
         return initr;
       };
+    };
+  }
+
+  static Function tag(String t){
+    return Funcs.tagDefer(Funcs.identity,1)(t);
+  }
+
+  static Function tagDefer(dynamic n,[int m]){
+    return (String tag){
+      return Funcs.tagPrint(tag,n,m);
     };
   }
 
