@@ -777,3 +777,117 @@ class StateManager{
     bool get isReady => this.current != null;
     
 }
+
+class DurationMixin {
+  dynamic incMillisFn(Duration n,int m) => new Duration(milliseconds: n.inMilliseconds + m);
+  dynamic incMacrosFn(Duration n,int m) => new Duration(microseconds: n.inMicroseconds + m);
+  dynamic decMillisFn(Duration n,int m) => new Duration(milliseconds: n.inMilliseconds - m);
+  dynamic decMacrosFn(Duration n,int m) => new Duration(microseconds: n.inMicroseconds - m);
+}
+
+abstract class Queueable<T>{
+  void queue(T n);
+  void dequeueAt(int i);
+  void dequeueFirst();
+  void dequeueLast();
+  void exec();
+  void halt();
+  void immediate();
+}
+
+class TasksQueue extends Queueable with DurationMixin{
+  bool _auto,_halt = false,_lock = false,_forceSingleRun = false;
+  List tasks;
+  List microtasks;
+  Duration _queueDelay;
+
+  static create([n]) => new TasksQueue(n);
+
+  TasksQueue([auto]){
+    this._auto = Funcs.switchUnless(auto,true);
+    this.tasks = new List();
+    this.microtasks = new List();
+    this._queueDelay = Duration.ZERO;
+  }
+
+  void queue(Function n){
+    if(this.locked) return null;
+    this.tasks.add(n);
+    return ((!this.singleRun && this.waiting && this.auto) ? this.exec() : null);
+  }
+
+  dynamic dequeueAt(int i) => !this.locked && this.tasks.removeAt(i);
+  dynamic dequeueFirst() => this.dequeueAt(0);
+  dynamic dequeueLast() => this.dequeueAt(this.tasks.length - 1);
+
+  void delay(int ms) => this._queueDelay = new Duration(milliseconds: ms);
+  void incDelay(int ms) => this.incMillisFn(this._queueDelay,ms);
+  void decDelay(int ms) => this.decMillisFn(this._queueDelay,ms);
+  void forceSingleRun() => this._forceSingleRun = true;
+  void disableSingleRun() => this._forceSingleRun = false;
+
+  bool get locked => !!this._lock;
+  bool get empty => this.tasks.isEmpty && this.microtasks.isEmpty;
+  bool get waiting => !this.empty;
+  bool get auto => !!this._auto;
+  bool get halted => !!this._halt;
+  bool get singleRun => !!this._forceSingleRun;
+
+  void _handleTasks(List cur,int n){
+    if(cur.length <= n) return null;
+    return cur.removeAt(n)();
+  }
+
+  void immediate(Function n){
+    if(this.locked) return null;
+    this.microtasks.add(n);
+  }
+
+  void immediateFor(int i){
+    if(this.locked) return null;
+    if(this.tasks.isEmpty || this.tasks.length <= i) return null;
+    var cur = this.tasks.removeAt(i);
+    this.microtasks.add(cur);
+  }
+
+  void downgrade(int n){
+    if(this.locked) return null;
+    if(this.microtasks.isEmpty || this.microtasks.length <= n) return null;
+    this.tasks.add(this.microtasks.removeAt(n));
+  }
+
+  void exec(){
+    if(this.locked) return null;
+    new Timer(this._queueDelay,(){
+      if(this.halted || (this.tasks.length <= 0 && this.microtasks.length <= 0)) return this.reset();
+      if(this.microtasks.length > 0) this._handleTasks(this.microtasks,0);
+      else this._handleTasks(this.tasks,0);
+      if(!this.singleRun) this.exec();
+    });
+  }
+
+  void halt(){
+    this._halt = true;
+  }
+
+  void end(){
+    this._lock = true;
+  }
+
+  void destroy(){
+    this.end();
+    this.tasks.clear();
+    this.microtasks.clear();
+    this._queueDelay = null;
+  }
+
+  void forceUnlock(){
+    this._lock = false;
+  }
+
+  void reset(){
+    this._halt = false;
+    this.disableSingleRun();
+    this.forceUnlock();
+  }
+}
