@@ -97,6 +97,67 @@ class Enums{
     return Enums.nth(a,a.length - 1);
   }
   
+  static dynamic valueDiff(dynamc m,dynamic v){
+    if(Valids.isString(m) && Valids.isString(v)) return Enums.valueDiff(m.split(''),v.split(''));
+    if(Valids.isMap(m) && Valids.isMap(v)) return Enums.valueMapDiff(m,v);
+    if(Valids.isList(m) && Valids.isList(v)) return Enums.valueListDiff(m,v);
+  }
+
+  static dynamic keyDiff(m,v){
+    if(Valids.isString(m) && Valids.isString(v)) return Enums.keyDiff(m.split(''),v.split(''));
+    if(Valids.isMap(m) && Valids.isMap(v)) return Enums.keyMapDiff(m,v);
+    if(Valids.isList(m) && Valids.isList(v)) return Enums.keyListDiff(m,v);
+  }
+
+  static Map keyMapDiff(Map m,Map n){
+    var diff = {};
+    n.forEach((k,v){
+      if(m.containsKey(k)){
+         if(m[k] == v) return null;
+         return diff[k] = v;
+      }
+      // return diff[k] = v;
+    });
+    return diff;
+  }
+
+  static List keyListDiff(List m,List n){
+    var diff = [],count = 0;
+    n.forEach((f){
+      ((f == m[count]) ? null : diff.add(count));
+      count += 1;
+    });
+    return diff;
+  }
+
+  static Map valueMapDiff(Map m,Map n){
+    var diff = {};
+
+    m.forEach((k,v){
+      if(n.containsKey(k) && n[k] == v) return null;
+      diff[k] = v;
+    });
+    n.forEach((k,v){
+      if(m.containsKey(k) && m[k] == v) return null;
+      diff[k] = v;
+    });
+    return diff;
+  }
+
+  static List valueListDiff(List a,List m){
+    var diff = [];
+    a.forEach((f){
+      if(m.contains(f)) return null;
+      diff.add(f);
+    });
+
+    m.forEach((f){
+      if(a.contains(f)) return null;
+      diff.add(f);
+    });
+    return diff;
+  }
+
   static Function nthFor(dynamic a){
     if(a is List) return (int ind){
       if(ind >= a.length) return null;

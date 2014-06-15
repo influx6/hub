@@ -795,15 +795,15 @@ abstract class Queueable<T>{
   void immediate();
 }
 
-class TasksQueue extends Queueable with DurationMixin{
+class TaskQueue extends Queueable with DurationMixin{
   bool _auto,_halt = false,_lock = false,_forceSingleRun = false;
   List tasks;
   List microtasks;
   Duration _queueDelay;
 
-  static create([n]) => new TasksQueue(n);
+  static create([n]) => new TaskQueue(n);
 
-  TasksQueue([auto]){
+  TaskQueue([auto]){
     this._auto = Funcs.switchUnless(auto,true);
     this.tasks = new List();
     this.microtasks = new List();
@@ -858,8 +858,9 @@ class TasksQueue extends Queueable with DurationMixin{
 
   void exec(){
     if(this.locked) return null;
+    if(this.halted) this.unhalt();
     new Timer(this._queueDelay,(){
-      if(this.halted || (this.tasks.length <= 0 && this.microtasks.length <= 0)) return this.reset();
+      if(this.halted || (this.tasks.length <= 0 && this.microtasks.length <= 0)) return null;
       if(this.microtasks.length > 0) this._handleTasks(this.microtasks,0);
       else this._handleTasks(this.tasks,0);
       if(!this.singleRun) this.exec();
@@ -869,6 +870,8 @@ class TasksQueue extends Queueable with DurationMixin{
   void halt(){
     this._halt = true;
   }
+
+  void unhalt();
 
   void end(){
     this._lock = true;

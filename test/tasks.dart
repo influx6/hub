@@ -1,6 +1,7 @@
-library atomic.spec;
+library hub.spec;
 
 import 'package:hub/hub.dart';
+import 'dart:async';
 
 void main(){
 
@@ -29,5 +30,5 @@ void main(){
 	});
 	z.queue(() => print('qe: ${count += 1}'));
 
-
+	z.exec();
 }

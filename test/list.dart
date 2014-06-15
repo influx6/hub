@@ -31,5 +31,11 @@ void main(){
     Funcs.debugOn('heapSort',Enums.heapSort(set,(n,m) => n < m));
     Funcs.debugOn('heapSort',Enums.heapSort(test,(n,m) => n > m));
 
+    var vdiff = Funcs.tagDefer(Enums.valueDiff,2);
+    var kdiff = Funcs.tagDefer(Enums.keyDiff,2);
 
+    vdiff('valuelistdiff')([1,2,4],[1,4,2]);
+    kdiff('keylistdiff')([1,2,4],[1,4,2]);
+    vdiff('valuemapdiff')({'n':1,'m':2,'g':4},{'n':1,'v':2,'g':4});
+    kdiff('keymapdiff')({'n':1,'m':2,'g':4},{'n':10,'v':2,'g':4});
 }
