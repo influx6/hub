@@ -1,7 +1,33 @@
 part of hub;
 
 class Enums{
-  
+    
+  static dynamic deepClone(dynamic m){
+    if(Valids.isList(m)) return Enums.listDeepClone(m);
+    if(Valids.isMap(m)) return Enums.mapDeepClone(m);
+    return m;
+  }
+
+  static List listDeepClone(List a){
+    var clone  = [];
+    a.forEach((f){
+      if(f is List) return clone.add(Enums.listDeepClone(f));
+      if(f is Map) return clone.add(Enums.mapDeepClone(f));
+      clone.add(f);
+    });
+    return clone;
+  }
+
+  static List mapDeepClone(Map a){
+    var clone = {};
+    a.forEach((k,f){
+      if(f is List) return clone[k] = (Enums.listDeepClone(f));
+      if(f is Map) return clone[k] = (Enums.mapDeepClone(f));
+      clone[k] = f;
+    });
+    return clone;
+  }
+
   static max(a,b) => Enums.comparator(a,b,(a,b) => a > b);
   static min(a,b) => Enums.comparator(a,b,(a,b) => a < b);
   static dynamic maxFor(List a,[num s,num e]) => Enums.compareBy(a,(c,a) => c > a,s,e);
@@ -154,6 +180,41 @@ class Enums{
     m.forEach((f){
       if(a.contains(f)) return null;
       diff.add(f);
+    });
+    return diff;
+  }
+
+  static dynamic uniqueDiff(m,v){
+    if(Valids.isString(m) && Valids.isString(v)) return Enums.uniqueDiff(m.split(''),v.split(''));
+    if(Valids.isMap(m) && Valids.isMap(v)) return Enums.uniqueMapDiff(m,v);
+    if(Valids.isList(m) && Valids.isList(v)) return Enums.uniqueListDiff(m,v);
+    return null;
+  }
+
+  static Map uniqueMapDiff(Map m,Map n){
+    var diff = {};
+    n.forEach((k,v){
+      if(m.containsKey(k)){
+         if(v is Map || v is List){
+            if(Enums.uniqueDiff(m[k],v).length > 0) diff[k] = v;
+            return null;
+         }
+         if(m[k] == v) return null;
+         return diff[k] = v;
+      }
+      return diff[k] = v;
+    });
+    return diff;
+  }
+
+  static List uniqueListDiff(List m,List n){
+    var diff = [],count = 0;
+    n.forEach((f){
+      if(count >= m.length) return diff.add(count);
+      if(Valids.isMap(f) || Valids.isList(f)){
+        if(Enums.uniqueDiff(n[count],f).length > 0) diff.add(count);
+      }else if(f != m[count]) diff.add(count);
+      count += 1;
     });
     return diff;
   }

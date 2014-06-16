@@ -13,6 +13,16 @@ part 'extensions.dart';
 
 class Hub{
   
+  static num getHash(dynam n) => n.hashCode;
+
+  static num calHash(Map m,[String j]){
+    j = Funcs.switchUnless(j,'');
+    var hash = [];
+    if(m is Map) m.forEach((v,k){ hash.add(Hub.getHash(k)); });
+    if(m is List) m.forEach((f){ hash.add(Hub.getHash(f)); });
+    return hash.join(j);
+  }
+
   static Map merge(Map a,Map b,{bool override: true}){
     return Enums.merge(a, b, override: override);
   }

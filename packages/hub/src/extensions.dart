@@ -476,6 +476,8 @@ class MapDecorator{
     MapDecorator.from(Map a): storage = new Map.from(a);
 
     MapDecorator.use(Map a): storage = a;
+
+    MapDecorator.unique(Map a): storage = Enums.deepClone(a);
       
     dynamic get(String key){
       if(this.has(key)) return this.storage[key];
@@ -894,3 +896,4 @@ class TaskQueue extends Queueable with DurationMixin{
     this.forceUnlock();
   }
 }
+

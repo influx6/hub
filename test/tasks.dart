@@ -6,7 +6,7 @@ import 'dart:async';
 void main(){
 
 	var count = 0;
-	var z = TasksQueue.create();
+	var z = TaskQueue.create();
 
 	z.delay(300);
 	z.queue(() => print('qe: ${count += 1}'));

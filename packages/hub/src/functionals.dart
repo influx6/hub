@@ -2,7 +2,6 @@ part of hub;
 
 class Funcs{
 
-
   static bool futureBind(){
     var ftrue = Funcs.alwaysTrue();
     var ffalse = Funcs.alwaysFalse();
