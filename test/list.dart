@@ -13,20 +13,19 @@ void main(){
     Funcs.debugOn('min',Enums.minFor(set));
     Funcs.debugOn('max',Enums.maxFor(set));
     
-    var canDebug = Funcs.futureBind();
-    var deflog = Funcs.defferedDebugLog(canDebug);
+    var deflog = Log.create();
 
-    var can = deflog('can-log',(num n,num m) => n*m,2,"From:{tag} --> \tResult:{res} \tMessage:{message} <--");
+    var can = deflog.make('can-log',(num n,num m) => n*m,2,"From:{tag} --> \tResult:{res} \tMessage:{message} <--");
 
-    canDebug(); // will return false
+    deflog.state; // will return false
 
     Funcs.debugOn('test',can('love focus')(2,2));
 
-    canDebug(true); //changed state to true
+    deflog.enable; //changed state to true
 
     can('must be equal to {res}')(2,2); //will print out details,replace res with the res and also return value
 
-    canDebug(false);
+    deflog.disable;
 
     Funcs.debugOn('heapSort',Enums.heapSort(set,(n,m) => n < m));
     Funcs.debugOn('heapSort',Enums.heapSort(test,(n,m) => n > m));
@@ -38,4 +37,5 @@ void main(){
     kdiff('keylistdiff')([1,2,4],[1,4,2]);
     vdiff('valuemapdiff')({'n':1,'m':2,'g':4},{'n':1,'v':2,'g':4});
     kdiff('keymapdiff')({'n':1,'m':2,'g':4},{'n':10,'v':2,'g':4});
+
 }

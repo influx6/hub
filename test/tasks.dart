@@ -12,23 +12,23 @@ void main(){
 	z.queue(() => print('qe: ${count += 1}'));
 	z.queue(() => print('qe: ${count += 1}'));
 	z.queue((){
-		z.immediate(() => print('qi: ${count += 3}'));
+		z.immediate(() => print('first qi: ${count += 3}'));
 	});
 	z.queue(() => print('qe: ${count += 1}'));
 	z.queue((){
-		z.immediate(() => print('qi: ${count += 3}'));
+		z.immediate(() => print('will downgrade second: qi: ${count += 3}'));
 		z.decDelay(100);
 		z.downgrade(0);
 	});
 	z.queue((){
-		z.immediate(() => print('qi: ${count += 1}'));
-		z.dequeueFirst();
+		z.immediate(() => print('third qi: ${count += 1}'));
+		// z.dequeueFirst();
 	});
 	z.queue((){
-		z.immediate(() => print('qi: ${count += 2}'));
+		z.immediate(() => print('final qi: ${count += 2}'));
 		z.decDelay(100);
 	});
-	z.queue(() => print('qe: ${count += 1}'));
+	z.queue(() => print('final qe: ${count += 1}'));
 
 	z.exec();
 }

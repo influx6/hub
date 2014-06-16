@@ -4,6 +4,24 @@ Function _empty(t,s){}
 var _smallA = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 var _bigA = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
+class Log{
+  Function _flip,_factori;
+
+  static create() => new Log();
+
+  Log(){
+    this._flip = Funcs.futureBind();
+    this._factori = Funcs.defferedDebugLog(this._flip);
+  }
+
+  Function get make => this._factori;
+  Function get flip => this._flip;
+
+  void get enable => this._flip(true);
+  void get disable => this._flip(false);
+  bool get state => this._flip();
+
+}
 
 abstract class Comparable{
   bool compare(dynamic d);
@@ -799,6 +817,7 @@ abstract class Queueable<T>{
 
 class TaskQueue extends Queueable with DurationMixin{
   bool _auto,_halt = false,_lock = false,_forceSingleRun = false;
+  Timer _timer;
   List tasks;
   List microtasks;
   Duration _queueDelay;
@@ -859,24 +878,31 @@ class TaskQueue extends Queueable with DurationMixin{
   }
 
   void exec(){
-    if(this.locked) return null;
-    if(this.halted) this.unhalt();
-    new Timer(this._queueDelay,(){
-      if(this.halted || (this.tasks.length <= 0 && this.microtasks.length <= 0)) return null;
-      if(this.microtasks.length > 0) this._handleTasks(this.microtasks,0);
-      else this._handleTasks(this.tasks,0);
+    if(this.empty || this.locked || this.halted) return null;
+    this._timer = new Timer(this._queueDelay,(){
+      this._handler();
       if(!this.singleRun) this.exec();
     });
+  }
+
+  void _handler(){
+      if((this.tasks.length <= 0 && this.microtasks.length <= 0)) return null;
+      if(this.microtasks.length > 0) this._handleTasks(this.microtasks,0);
+      else this._handleTasks(this.tasks,0);
+      this.end();
   }
 
   void halt(){
     this._halt = true;
   }
 
-  void unhalt();
+  void unhalt(){
+    this._halt = false;
+  }
 
   void end(){
-    this._lock = true;
+    this._timer.cancel();
+    this._timer = null;
   }
 
   void destroy(){
