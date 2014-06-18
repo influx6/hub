@@ -3,6 +3,7 @@ library hubclient;
 import 'dart:js';
 import 'package:hub/hub.dart';
 
+@MirrorsUsed(targets: const["hub"])
 export 'package:hub/hub.dart';
 
 class JStripe{

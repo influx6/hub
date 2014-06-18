@@ -1,8 +1,10 @@
 library hub;
 
-import 'dart:mirrors';
 import 'dart:math' as math;
 import 'dart:async';
+
+@MirrorsUsed(targets: const["hub"])
+import 'dart:mirrors';
 
 part 'validators.dart';
 part 'enums.dart';

@@ -225,8 +225,7 @@ class Switch{
 class Distributor<T>{
   List<Function> listeners = new List<Function>();
   final done = new List<Function>();
-  final once = new List<Function>();
-  final _removal = new List<Function>();
+  final oncer = new List<Function>();
   final Switch _switch = Switch.create();
   String id;
   bool _locked = false;
@@ -235,11 +234,13 @@ class Distributor<T>{
 
   Distributor(this.id);
   
-  void onOnce(Function n){
-    if(this.once.contains(n)) return;
-    this.once.add(n);     
+  void onOnce(Funcion n){
+    if(this.oncer.contains(n)) return;
+    this.oncer.add(n);     
   }
   
+  void once(n) => this.onOnce(n);
+
   void on(Function n){
     if(this.listeners.contains(n)) return;
     this.listeners.add(n);
@@ -248,29 +249,23 @@ class Distributor<T>{
   void whenDone(Function n){
     if(!this.done.contains(n)) this.done.add(n);
   }
+
+  dynamic offWhenDone(Function n){
+    return this.done.remove(n);
+  }
   
   dynamic off(Function m){
-    if(!!this._switch.on()){
-      return this._removal.add((j){
-        return this.listeners.remove(m);
-      });
-    }
     return this.listeners.remove(m);
   }
 
   dynamic offOnce(Function n){
-    if(!!this._switch.on()){
-      return this._removal.add((j){
-        return this.once.remove(m);
-      });
-    }
-    return this.once.remove(m);
+    return this.oncer.remove(m);
   }
   
   void free(){
     this.freeListeners();
     this.done.clear();
-    this.once.clear();
+    this.oncer.clear();
   }
 
   void freeListeners(){
@@ -286,25 +281,21 @@ class Distributor<T>{
   void fireListeners(T n){
     if(this.listeners.length <= 0) return;
     
-    this._switch.switchOn();
     Hub.eachAsync(this.listeners,(e,i,o,fn){
       e(n);
-      fn(null);
+      return fn(null);
     },(o,err){
       this.fireDone(n);
-      this._switch.switchOff();
-      this._fireRemoval(n);
     });   
   }
  
   void fireOncers(T n){
-    if(this.once.length <= 0) return null;
-    Hub.eachAsync(this.once,(e,i,o,fn){
+    if(this.oncer.length <= 0) return null;
+    Hub.eachAsync(this.oncer,(e,i,o,fn){
       e(n);
-      fn(null);
-    },(o,err){
+      return fn(null);
     });
-    this.once.clear();
+    this.oncer.clear();
   }
   
   void fireDone(T n){
@@ -315,14 +306,6 @@ class Distributor<T>{
     });
   }
   
-  void _fireRemoval([T n]){
-    if(this._removal.length <= 0 || this._switch.on()) return;
-    Hub.eachAsync(this._removal,(e,i,o,fn){
-      e(n);
-      fn(null);
-    });
-  }
-
   bool get hasListeners{
     return (this.listeners.length > 0);
   }
@@ -826,15 +809,22 @@ class TaskQueue extends Queueable with DurationMixin{
 
   TaskQueue([auto]){
     this._auto = Funcs.switchUnless(auto,true);
-    this.tasks = new List();
-    this.microtasks = new List();
+    this.tasks = new List<Function>();
+    this.microtasks = new List<Function>();
     this._queueDelay = Duration.ZERO;
   }
 
-  void queue(Function n){
+  void queue(Function n(m)){
     if(this.locked) return null;
     this.tasks.add(n);
     return ((!this.singleRun && this.waiting && this.auto) ? this.exec() : null);
+  }
+  void queueAfter(int ms,Function n(m)){
+    new Timer(new Duration(milliseconds:ms),(){ this.queue(n); });
+  }
+  
+  Timer queueEvery(int ms,Function n(m)){
+    return new Timer.periodic(new Duration(milliseconds:ms),(t){ this.queue(n); });
   }
 
   dynamic dequeueAt(int i) => !this.locked && this.tasks.removeAt(i);
@@ -854,12 +844,16 @@ class TaskQueue extends Queueable with DurationMixin{
   bool get halted => !!this._halt;
   bool get singleRun => !!this._forceSingleRun;
 
-  void _handleTasks(List cur,int n){
+  int get totalJobs => this.tasks.length + this.microtasks.length;
+  int get totalTasks => this.tasks.length;
+  int get totalMicrotasks => this.microtasks.length;
+
+  void _handleTasks(List cur,int n,[dynamic val]){
     if(cur.length <= n) return null;
-    return cur.removeAt(n)();
+    return cur.removeAt(n)(val);
   }
 
-  void immediate(Function n){
+  void immediate(Function n(m)){
     if(this.locked) return null;
     this.microtasks.add(n);
   }
@@ -877,18 +871,33 @@ class TaskQueue extends Queueable with DurationMixin{
     this.tasks.add(this.microtasks.removeAt(n));
   }
 
-  void exec(){
+  void repeat(int n){
+    if(this.locked) return null;
+    if(this.tasks.isEmpty || this.tasks.length <= n) return null;
+    this.tasks.add(this.tasks.elementAt(n));
+  }
+
+  void repeatImmediate(int n){
+    if(this.locked) return null;
+    if(this.microtasks.isEmpty || this.microtasks.length <= n) return null;
+    this.microtasks.add(this.microtasks.elementAt(n));
+  }
+
+  int taskIndex(Function n) => this.tasks.indexOf(n);
+  int microtaskIndex(Function n) => this.microtasks.indexOf(n);
+
+  void exec([dynamic v]){
     if(this.empty || this.locked || this.halted) return null;
     this._timer = new Timer(this._queueDelay,(){
-      this._handler();
-      if(!this.singleRun) this.exec();
+      this._handler(v);
+      if(!this.singleRun) this.exec(v);
     });
   }
 
-  void _handler(){
+  void _handler([v]){
       if((this.tasks.length <= 0 && this.microtasks.length <= 0)) return null;
-      if(this.microtasks.length > 0) this._handleTasks(this.microtasks,0);
-      else this._handleTasks(this.tasks,0);
+      if(this.microtasks.length > 0) this._handleTasks(this.microtasks,0,v);
+      else this._handleTasks(this.tasks,0,v);
       this.end();
   }
 
@@ -905,10 +914,25 @@ class TaskQueue extends Queueable with DurationMixin{
     this._timer = null;
   }
 
+  void clearMicrotasks(){
+    this.halt();
+    this.microtasks.clear();
+    this.unhalt();
+  }
+
+  void clearTasks(){
+    this.halt();
+    this.tasks.clear();
+    this.unhalt();
+  }
+
+  void clearJobs(){
+    this.clearMicrotasks();
+    this.clearTasks();
+  }
+
   void destroy(){
     this.end();
-    this.tasks.clear();
-    this.microtasks.clear();
     this._queueDelay = null;
   }
 
