@@ -178,18 +178,6 @@ class Hub{
 		return lib.getClass(className);
 	}
 		
-	static SingleLibraryManager singleLibrary(library){
-		return SingleLibraryManager.create(library);
-	}
-	
-	static dynamic findLibrary(library){
-		var ms = currentMirrorSystem();
-		var lib = ms.findLibrary(Hub.encryptSymbol(library));
-		if(lib == null) throw "Unable to find Library: $library";
-		return lib;
-	}
-
-	
 	static void eachAsync(List a,Function iterator,[Function complete]){
     return Enums.eachAsync(a, iterator,complete);
   }
