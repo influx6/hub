@@ -87,5 +87,5 @@ class SingleLibraryManager{
     var cm = this.getClass(name);
     return cm.newInstance((constructor == null ? name : constructor), pos,named);
   }
-  
+  	
 }

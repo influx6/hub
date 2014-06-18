@@ -1,6 +1,7 @@
 library mirrorables;
 
 import 'package:hub/hub.dart';
+
 @MirrorsUsed(targets: const["mirrorables"])
 import 'dart:mirrors';
 
@@ -10,17 +11,6 @@ class SingleLibraryManager{
   Symbol tag;
   final ms = currentMirrorSystem();
   LibraryMirror library;
-
-  static SingleLibraryManager singleLibrary(library){
-		return SingleLibraryManager.create(library);
-  }
-	
-  static dynamic findLibrary(library){
-		var ms = currentMirrorSystem();
-		var lib = ms.findLibrary(Hub.encryptSymbol(library));
-		if(lib == null) throw "Unable to find Library: $library";
-		return lib;
-   }
   
   static create(String n,[LibraryMirror lib]){
     if(lib != null) return new SingleLibraryManager.use(n,lib);
@@ -87,5 +77,5 @@ class SingleLibraryManager{
     var cm = this.getClass(name);
     return cm.newInstance((constructor == null ? name : constructor), pos,named);
   }
-  	
+  
 }

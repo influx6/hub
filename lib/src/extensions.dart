@@ -875,3 +875,55 @@ class TaskQueue extends Queueable with DurationMixin{
   }
 }
 
+
+class Pipe{
+  String id;
+  dynamic pin,pout;
+  dynamic out = Hub.createDistributor('pipe-out');
+
+  static create(String id) => new Pipe(id);
+
+  Pipe(this.id){
+    this.pout = Hub.createDistributor('pipe-out');
+    this.pin = Hub.createDistributor('pipe-in');
+  }
+
+  bool get active => Valids.exist(this.pout) && Valids.exist(this.pin);
+
+  void sendOut(dynamic n){
+    if(!this.active) return null;
+    this.pout.emit(n);
+  }
+
+  void sendIn(dynamic n){
+    if(!this.active) return null;
+    this.pin.emit(n);
+  }
+
+  void recieve(Function m){
+    if(!this.active) return null;
+    this.pin.on(m);
+  }
+
+  void recieveOnce(Function m){
+    if(!this.active) return null;
+    this.pin.once(m);
+  }
+
+  void unrecieve(Function m){
+    if(!this.active) return null;
+    this.pin.off(m);
+  }
+
+  void unrecieveOnce(Function m){
+    if(!this.active) return null;
+    this.pin.offOnce(m);
+  }
+
+  void destroy(){
+    if(!this.active) return null;
+    this.pin.free();
+    this.pout.free();
+    this.pin = this.pout = null;
+  }
+}
