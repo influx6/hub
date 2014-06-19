@@ -5,11 +5,33 @@ var _smallA = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", 
 var _bigA = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
 class Log{
-  Function _flip,_factori;
+  Function _flip,factori;
 
   static create() => new Log();
 
   Log(){
+    this._flip = Funcs.futureBind();
+    this.factori = Funcs.tagDeferable(this._flip);
+  }
+
+  Function log(String t,dynamic v,[String f]){
+    return this.factori(t,v,f);
+  }
+
+  Function get flip => this._flip;
+
+  void get enable => this._flip(true);
+  void get disable => this._flip(false);
+  bool get state => this._flip();
+
+}
+
+class WrapperLog{
+  Function _flip,_factori;
+
+  static create() => new WrapperLog();
+
+  WrapperLog(){
     this._flip = Funcs.futureBind();
     this._factori = Funcs.defferedDebugLog(this._flip);
   }

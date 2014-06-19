@@ -40,6 +40,13 @@ class Funcs{
     };
   }
 
+  static Function tagDeferable(Function check,[Function p,Function cs]){
+    return (tag,m,[String f]){
+      if(check()) return Funcs.tagPrint(tag,Funcs.identity,1,f,p,cs)(m);
+      return m;
+    };
+  }
+
   static Function defferedDebugLog(Function check){
     return (tag,Function op,[num sx,String format,Function n,Function p]){
       p = Funcs.switchUnless(p,Funcs.identity);

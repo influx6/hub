@@ -13,7 +13,11 @@ void main(){
     Funcs.debugOn('min',Enums.minFor(set));
     Funcs.debugOn('max',Enums.maxFor(set));
     
-    var deflog = Log.create();
+    var deflog = WrapperLog.create();
+    var quicklog = Log.create();
+
+    quicklog.enable;
+    quicklog.log('pre:',test,'We got {tag} with {res}');
 
     var can = deflog.make('can-log',(num n,num m) => n*m,2,"From:{tag} --> \tResult:{res} \tMessage:{message} <--");
 
