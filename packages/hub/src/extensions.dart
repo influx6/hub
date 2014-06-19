@@ -7,11 +7,11 @@ var _bigA = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N
 class Log{
   Function _flip,factori;
 
-  static create() => new Log();
+  static create([n,p]) => new Log(n,p);
 
-  Log(){
+  Log([Function p,Function cs]){
     this._flip = Funcs.futureBind();
-    this.factori = Funcs.tagDeferable(this._flip);
+    this.factori = Funcs.tagDeferable(this._flip,p,cs);
   }
 
   Function log(String t,dynamic v,[String f]){
