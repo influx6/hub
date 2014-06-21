@@ -74,7 +74,7 @@ class Funcs{
     });
 
     Funcs.when(Valids.isFunction(m),(){
-
+        res.add(m.toString());
     });
 
     return res.join('');
