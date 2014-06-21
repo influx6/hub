@@ -1,8 +1,25 @@
 library hub.spec;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'package:hub/hub.dart';
+
+class M{
+    String id;
+    M(this.id);
+
+    String toString() => "M identity: ${this.id}";
+}
+
+class N{
+    String id;
+    N(this.id);
+
+    String toJSON() => JSON.encode("{ N: ${this.id}}");
+
+    String toString() => "N identity: ${this.id}";
+}
 
 void main(){
   
@@ -12,6 +29,8 @@ void main(){
         'id': 0,
         'date': new DateTime.now(),
         'list': [1,3],
+        'm': new M('london'),
+        'n': new N('southkorea'),
         'dp': {
             'name':"deeper",
             'tag': 'will it work',

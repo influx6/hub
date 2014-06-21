@@ -63,7 +63,6 @@ class Funcs{
       Funcs.when(Valids.isDate(m),(){
           res.add(Funcs.doubleQuote(m.toUtc().toString()));
       },(){
-
           try{
             res.add(JSON.encode(m));
           }catch(e){
