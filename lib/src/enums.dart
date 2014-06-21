@@ -442,6 +442,20 @@ class Enums{
     return Enums.yankValuesOn(a,(r) => Valids.match(r,m));
   }
 
+  static dynamic yankNth(List a,int i){
+    if(a.length - 1 < i) return null;
+    var tmp = a[i];
+    a.removeAt(i);
+    return tmp;
+  }
+  
+  static dynamic yankFirst(List a) => Enums.yankNth(a,0);
+  static dynamic yankSecond(List a) => Enums.yankNth(a,1);
+  static dynamic yankThird(List a) => Enums.yankNth(a,2);
+  static dynamic yankForth(List a) => Enums.yankNth(a,3);
+  static dynamic yankFive(List a) => Enums.yankNth(a,4);
+  static dynamic yankLast(List a) => Enums.yankNth(a,a.length - 1);
+
   static dynamic yankValuesOn(List a,Function m){
     var yanked = [], index = Enums.indexesOf(a,m);
     index.forEach((f){ yanked.add(a[f]); a.removeAt(f); });

@@ -6,15 +6,18 @@ var _bigA = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N
 
 class Log{
   Function _flip,factori;
+  String format;
 
-  static create([n,p]) => new Log(n,p);
+  static create([n,p,f]) => new Log(n,p,f);
 
-  Log([Function p,Function cs]){
+  Log([Function p,Function cs,String format]){
+    this.format = format;
     this._flip = Funcs.futureBind();
     this.factori = Funcs.tagDeferable(this._flip,p,cs);
   }
 
   Function log(String t,dynamic v,[String f]){
+    f = Funcs.switchUnless(f,this.format);
     return this.factori(t,v,f);
   }
 

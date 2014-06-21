@@ -2,6 +2,7 @@ library hub;
 
 import 'dart:math' as math;
 import 'dart:async';
+import 'dart:convert';
 
 @MirrorsUsed(targets: const["hub"])
 import 'dart:mirrors';

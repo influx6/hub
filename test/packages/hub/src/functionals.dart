@@ -2,6 +2,100 @@ part of hub;
 
 class Funcs{
 
+  static String quote(dynamic m){
+    return "'"+ m.toString() + "'";
+  }
+
+  static String doubleQuote(dynamic m){
+    return '"'+ m.toString() + '"';
+  }
+
+  static String combineStrings(String f,String s,[String t]){
+    t = Funcs.switchUnless(t,'');
+    return f.toString() + s.toString() + t.toString();
+  }
+
+  static String prettyPrint(dynamic m,[int indent,int gaplevel]){
+    indent = Funcs.switchUnless(indent,1);
+    gaplevel = Funcs.switchUnless(gaplevel,1);
+
+    if(indent >= 3) indent = 2;
+
+    var res = [],
+        gp = Funcs.rangeFill(gaplevel,' ').join(''),
+        ig = Funcs.rangeFill(indent,Funcs.combineStrings(gp,'\n')).join('');
+
+    Funcs.when(Valids.isNumber(m),(){
+        res.add(m.toString());
+    });
+
+    Funcs.when(Valids.isString(m),(){
+        res.add(Funcs.doubleQuote(m));
+    });
+
+    Funcs.when(Valids.isList(m),(){
+      var gap = gaplevel,bg = gp, r = [];
+
+      if(gap > 2){ gap = 1; bg = Funcs.rangeFill(gap,' ').join('');}
+
+      m.forEach((f){
+        r.add(Funcs.prettyPrint(f));
+      });
+      res = [Funcs.combineStrings('[',bg),
+        r.join(Funcs.combineStrings(bg,',',bg)),
+        Funcs.combineStrings(bg,']')];
+    });
+
+    Funcs.when(Valids.isMap(m),(){
+      var f,key,val,r = [];
+      m.forEach((k,v){
+          key = Funcs.combineStrings(gp,Funcs.combineStrings(Funcs.doubleQuote(k),':',' '));
+          val = Funcs.prettyPrint(v,indent+1,gaplevel+3);
+          r.add(Funcs.combineStrings('\n',Funcs.combineStrings(ig,key,val),','));
+      });
+
+      f = Funcs.combineStrings('',r.join(''));
+      res = [Funcs.combineStrings('{',''),f,Funcs.combineStrings(ig,gp,'}')];
+    });
+
+    Funcs.when(Valids.isOnlyObject(m),(){
+
+      Funcs.when(Valids.isDate(m),(){
+          res.add(Funcs.doubleQuote(m.toUtc().toString()));
+      },(){
+
+          try{
+            res.add(JSON.encode(m));
+          }catch(e){
+            res.add(m.toString());
+          }
+      });
+
+
+    });
+
+    Funcs.when(Valids.isFunction(m),(){
+
+    });
+
+    return res.join('');
+  }
+
+  static Function single(List<Function> ops,[int x,Function gh]){
+      if(Valids.isOdd(ops.length)) ops = [Funcs.identity].addAll(ops);
+
+      if(ops.length <= 0) return gh;
+
+      var fs = Enums.yankFirst(ops), se = Enums.yankFirst(ops);
+      var nx = (ops.length <= 2 ? x : 1 );
+
+      if(Valids.notExist(fs) || Valids.notExist(se)) return null;
+
+      gh = Funcs.compose(fs,se,nx);
+
+      return Funcs.single(ops,x,gh);
+  }
+
   static bool futureBind(){
     var ftrue = Funcs.alwaysTrue();
     var ffalse = Funcs.alwaysFalse();
@@ -66,6 +160,8 @@ class Funcs{
       };
     };
   }
+
+  static Function tagLog(String t,dynamic n) => Funcs.debugOn(t,n);
 
   static Function tag(String t){
     return Funcs.tagDefer(Funcs.identity,1)(t);
@@ -408,5 +504,11 @@ class Funcs{
 
   static Function negate(Function m,[num sx]){
     return Funcs.compose((n){ return !n; },m,sx);
+  }
+
+  static dynmic dartApply(Function n,[List a,Map m]){
+    a = Funcs.switchUnless(a,[]);
+    m = Hub.encryptNamedArguments(Funcs.switchUnless(m,{}));
+    return Function.apply(n,a,m);
   }
 }
