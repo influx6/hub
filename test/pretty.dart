@@ -25,6 +25,7 @@ void main(){
   
     var test = [4,20,10,3,1,100,'love'];
     var  mp = {
+        'fn': Funcs.switchUnless,
         'name': 'center',
         'id': 0,
         'date': new DateTime.now(),

@@ -515,6 +515,12 @@ class MapDecorator{
       });
     }
 
+    void updateAllFrom(Map m){
+      m.forEach((n,k){
+        this.update(n,k);
+      });
+    }
+
     void updateAll(MapDecorator m){
       m.onAll((n,k){
         this.update(n,k);
