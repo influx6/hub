@@ -25,9 +25,10 @@ void main(){
   
     var test = [4,20,10,3,1,100,'love'];
     var  mp = {
-        'fn': Funcs.switchUnless,
+        // 'fn': Funcs.switchUnless,
         'name': 'center',
         'id': 0,
+        'padding': '10px 10px 0px 10px',
         'date': new DateTime.now(),
         'list': [1,3],
         'm': new M('london'),
@@ -36,13 +37,13 @@ void main(){
             'name':"deeper",
             'tag': 'will it work',
             'list': [1,3],
-            'dp': {
+            'wp': {
                 'name':"deeper",
                 'tag': 'will it work',
-                'dp': {
+                'rp': {
                     'name':"deeper",
                     'tag': 'will it work',
-                    'dp': {
+                    'ep': {
                         'name':"deeper",
                         'tag': 'will it work',
                         'list': [1,3],
@@ -55,6 +56,6 @@ void main(){
     Funcs.debug(Funcs.prettyPrint(1));
     Funcs.debug(Funcs.prettyPrint('socket'));
     Funcs.debug(Funcs.prettyPrint(test));
-    Funcs.debug(Funcs.prettyPrint(mp));
+    Funcs.debug(Funcs.prettyPrint(mp,null,null,''));
 
 }

@@ -15,9 +15,10 @@ class Funcs{
     return f.toString() + s.toString() + t.toString();
   }
 
-  static String prettyPrint(dynamic m,[int indent,int gaplevel]){
+  static String prettyPrint(dynamic m,[int indent,int gaplevel,String joind]){
     indent = Funcs.switchUnless(indent,1);
     gaplevel = Funcs.switchUnless(gaplevel,1);
+    joind = Funcs.switchUnless(joind,'');
 
     if(indent >= 3) indent = 2;
 
@@ -39,7 +40,7 @@ class Funcs{
       if(gap > 2){ gap = 1; bg = Funcs.rangeFill(gap,' ').join('');}
 
       m.forEach((f){
-        r.add(Funcs.prettyPrint(f));
+        r.add(Funcs.prettyPrint(f,indent,gaplevel,joind));
       });
       res = [Funcs.combineStrings('[',bg),
         r.join(Funcs.combineStrings(bg,',',bg)),
@@ -50,7 +51,7 @@ class Funcs{
       var f,key,val,r = [];
       m.forEach((k,v){
           key = Funcs.combineStrings(gp,Funcs.combineStrings(Funcs.doubleQuote(k),':',' '));
-          val = Funcs.prettyPrint(v,indent+1,gaplevel+3);
+          val = Funcs.prettyPrint(v,indent+1,gaplevel+3,joind);
           r.add(Funcs.combineStrings('\n',Funcs.combineStrings(ig,key,val),','));
       });
 
@@ -77,7 +78,7 @@ class Funcs{
         res.add(m.toString());
     });
 
-    return res.join('');
+    return res.join(joind);
   }
 
   static Function single(List<Function> ops,[int x,Function gh]){
