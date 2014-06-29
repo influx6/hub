@@ -1033,7 +1033,6 @@ class FunctionalAtomic{
     }
     
     void checkAtomics(){
-      this._changed.clear();
       Enums.eachAsync(this.atomics.factories.core,(e,i,o,fn){
         var val = e(this.handler);
         var old = this._values.get(i);
@@ -1052,6 +1051,7 @@ class FunctionalAtomic{
          this._changed.forEach((i){
             this.atomicdist.get(i['id']).emit(i);
          });
+        this._changed.clear();
       });
     }
 
