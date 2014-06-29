@@ -1000,7 +1000,7 @@ class FunctionFactory{
 }
 
 class FunctionalAtomic{
-    dynamic handler;
+    dynamic _handler;
     FunctionFactory atomics;
     MapDecorator atomicdist;
     MapDecorator _values;
@@ -1008,7 +1008,7 @@ class FunctionalAtomic{
     
     static create(n) => new FunctionalAtomic(n);
 
-    FunctionalAtomic(this.handler){
+    FunctionalAtomic(this._handler){
       this.atomics = FunctionFactory.create();
       this._values = MapDecorator.create();
       this.atomicdist = MapDecorator.create();
@@ -1032,9 +1032,21 @@ class FunctionalAtomic{
       this.checkAtomics();
     }
     
+    void destroy(){
+      this.atomics.destroy();
+      this._values.clear();
+      this.atomicdist.clear();
+      this._changed.clear();
+    }
+  
+    void changeHandler(handle){
+      this._handler = handle;
+    }
+
     void checkAtomics(){
+      if(Valids.notExist(this._handler)) return null;
       Enums.eachAsync(this.atomics.factories.core,(e,i,o,fn){
-        var val = e(this.handler);
+        var val = e(this._handler);
         var old = this._values.get(i);
         
         if(Valids.notExist(old)){
@@ -1049,7 +1061,7 @@ class FunctionalAtomic{
         fn(null);
       },(_,i){
          this._changed.forEach((i){
-            this.atomicdist.get(i['id']).emit(i);
+            this.fireAtomic(i['id'],i);
          });
         this._changed.clear();
       });
