@@ -5,7 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 
 @MirrorsUsed(targets: const[Hub])
-import 'dart:mirrors';
+import 'dart:mirror';
 
 part 'validators.dart';
 part 'enums.dart';

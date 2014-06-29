@@ -958,3 +958,135 @@ class Pipe{
     this.pin = this.pout = null;
   }
 }
+
+
+class FunctionFactory{
+	MapDecorator _hidden,factories;
+
+	static create() => new FunctionFactory();
+
+	FunctionFactory(){
+		this._hidden = MapDecorator.create();
+		this.factories = MapDecorator.create();
+	}
+
+	void addFactory(String name,Function n(e)){
+		this._hidden.add(name,n);
+		this.factories.add(name,(n){
+			return this._hidden.get(name)(n);
+		});
+	}
+
+	Function updateFactory(String name,Function n(e)){
+		this._hidden.update(name,n);
+	}
+
+	void removeFactory(String name){
+		this._hidden.destroy(name);
+		this.factories.destroy(name);
+	}
+
+	Function getFactory(String name) => this.factories.get(name);
+
+	bool hasFactory(String name) => this.factories.has(name);
+
+	void fireFactory(String name,[dynamic n]) => this.hasFactory(name) && this.getFactory(name)(n);
+        
+	void destroy(){
+		this._hidden.clear();
+		this.factories.clear();
+		this._hidden = this.factories = null;
+	}
+}
+
+class FunctionalAtomic{
+    dynamic handler;
+    FunctionFactory atomics;
+    MapDecorator atomicdist;
+    MapDecorator _values;
+    List _changed;
+    
+    static create(n) => new FunctionalAtomic(n);
+
+    FunctionalAtomic(this.handler){
+      this.atomics = FunctionFactory.create();
+      this._values = MapDecorator.create();
+      this.atomicdist = MapDecorator.create();
+      this._changed = new List();
+      this.checkAtomics();
+    }
+
+    void addAtomic(String id,Function n(e)){
+      this.atomics.addFactory(id,n);
+      this.atomicdist.add(id,Distributor.create(id));
+      this.checkAtomics();
+    }
+
+    void removeAtomic(String id){
+      this.atomics.removeFactory(id);
+      this.atomicdist.destroy(id);
+    }
+
+    void updateAtomic(String id,Function n){
+      this.atomics.updateFactory(id,n);
+      this.checkAtomics();
+    }
+    
+    void checkAtomics(){
+      this._changed.clear();
+      Enums.eachAsync(this.atomics.factories.core,(e,i,o,fn){
+        var val = e(this.handler);
+        var old = this._values.get(i);
+        
+        if(Valids.notExist(old)){
+            this._values.add(i,val);
+            return fn(null);
+        }
+        
+        if(Valids.match(val,old)) return fn(null);
+
+        this._values.update(i,val);
+        this._changed.add({'id':i,'new':val,'old':old});
+        fn(null);
+      },(_,i){
+         this._changed.forEach((i){
+            this.atomicdist.get(i['id']).emit(i);
+         });
+      });
+    }
+
+    void bind(String name,Function n){
+            if(!this.atomicdist.has(name)) return null;
+            return this.atomicdist.get(name).on(n);
+    }
+
+    void bindWhenDone(String name,Function n){
+            if(!this.atomicdist.has(name)) return null;
+            return this.atomicdist.get(name).whenDone(n);
+    }
+
+    void unbindWhenDone(String name,Function n){
+            if(!this.atomicdist.has(name)) return null;
+            return this.atomicdist.get(name).offWhenDone(n);
+    }
+
+    void bindOnce(String name,Function n){
+            if(!this.atomicdist.has(name)) return null;
+            return this.atomicdist.get(name).once(n);
+    }
+
+    void unbind(String name,Function n){
+            if(!this.atomicdist.has(name)) return null;
+            return this.atomicdist.get(name).off(n);
+    }
+
+    void unbindOnce(String name,Function n){
+            if(!this.atomicdist.has(name)) return null;
+            return this.atomicdist.get(name).offOnce(n);
+    }
+
+    void fireAtomic(String n,Map m){
+        if(!this.atomicdist.has(n)) return null;
+        return this.atomicdist.get(n).emit(m);
+    }
+}
