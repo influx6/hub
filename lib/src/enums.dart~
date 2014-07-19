@@ -2,36 +2,17 @@ part of hub;
 
 class Enums{
 
-  static dynamic flatten(dynamic n,[dynamic m]){
-    if(n is List) return Enums.flattenList(n,m);
-    if(n is Map) return Enums.flattenMap(n,m);
+  static dynamic flat(dynamic n,[dynamic m){
+    if(n is List) return Enums.flatList(n,m);
+    if(n is Map) return Enums.flatMap(n,m);
   }
   
-  static dynamic flattenMap(Map m,[Map ms]){
-    ms = Funcs.switchUnless(ms,{});
-    Enums.eachAsync(m,(e,i,o,fn){
-      if(e is Map){
-        Enums.flatten(e,ms);
-        return fn(null);
-      }
-      ms[i] = e;
-      return fn(null);
-    });
-    return ms;
+  static dynamic flatMap(Map m,[Map rs]){
+  
   }
   
-  static dynamic flattenList(List m,[List ns]){
-     ns = Funcs.switchUnless(ns,[]);
-    Enums.eachAsync(m,(e,i,o,fn){
-      if(e is List){
-        Enums.flatten(e,ns);
-        return fn(null);
-      }
-      ms.add(e);
-      return fn(null);
-    });
-
-     return ns;
+  static dynamic flatList(List m,[List ns]){
+  
   }
   
   static dynamic locateWith(MapDecorator m,String s,[Function g]){
