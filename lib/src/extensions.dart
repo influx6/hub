@@ -493,9 +493,9 @@ class SymbolCache{
 class MapDecorator{
     var storage;
 
-    static create(){
-      return new MapDecorator();
-    }
+    static MapDecorator create() => new MapDecorator();
+
+    static MapDecorator useMap(m) => new MapDecorator.use(m);
       
     MapDecorator(): storage = new Map();
 

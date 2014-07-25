@@ -15,7 +15,18 @@ part 'extensions.dart';
 
 
 class Hub{
-  
+
+  static String escapeHtml(String m){
+     return m.replaceAll(r'\n','\\n').
+      replaceAll(r'\r','\\r').
+      replaceAll(r"'","\\").
+      replaceAll(r"/&","&amp").
+      replaceAll(r'<','&lt;').
+      replaceAll(r'>','&gt;').
+      replaceAll(r'>','&gt;').
+      replaceAll(r'\"','%quot;');
+  }
+
   static num getHash(dynam n) => n.hashCode;
 
   static num calHash(Map m,[String j]){

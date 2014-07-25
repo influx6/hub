@@ -5,6 +5,8 @@ class Valids{
   @deprecated
   static bool iS(n,m) => match(n,m);
   
+  static bool notCollection = Funcs.compose(Valids.not,Valids.isCollection);
+
   static bool match(n,m){ return !!(n == m); }  
   static bool not(bool m){ return !m; }
   static bool isNot(n,m){ return Valids.not(Valids.match(n,m)); }
