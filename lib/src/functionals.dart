@@ -2,6 +2,10 @@ part of hub;
 
 class Funcs{
 
+  static Function emptyFunction(){}
+  static Function emptySingleFunction([a]){}
+  static Function emptyDualFunction([a,b]){}
+
   static String quote(dynamic m){
     return "'"+ m.toString() + "'";
   }
