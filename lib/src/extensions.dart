@@ -490,20 +490,22 @@ class SymbolCache{
   String toString() => "SymbolCacheObject";
 }
 
-class MapDecorator{
-    var storage;
+class MapDecorator<T,K>{
+    Map<T,K> storage;
 
     static MapDecorator create() => new MapDecorator();
 
-    static MapDecorator useMap(m) => new MapDecorator.use(m);
+    static MapDecorator useMap(Map<T,K> m) => new MapDecorator.use(m);
+
+    static MapDecorator fromMap(Map<T,K> m) => new MapDecorator.from(m);
       
-    MapDecorator(): storage = new Map();
+    MapDecorator(): storage = new Map<T,K>();
 
-    MapDecorator.from(Map a): storage = new Map.from(a);
+    MapDecorator.from(Map<T,K> a): storage = new Map<T,K>.from(a);
 
-    MapDecorator.use(Map a): storage = a;
+    MapDecorator.use(Map<T,K> a): storage = a;
 
-    MapDecorator.unique(Map a): storage = Enums.deepClone(a);
+    MapDecorator.unique(Map<T,K> a): storage = Enums.deepClone(a);
       
     dynamic get(String key){
       if(this.has(key)) return this.storage[key];
@@ -1101,3 +1103,4 @@ class FunctionalAtomic{
         return this.atomicdist.get(n).emit(m);
     }
 }
+

@@ -4,8 +4,17 @@ import 'package:hub/hub.dart';
 
 @MirrorsUsed(targets: const["mirrorables"])
 import 'dart:mirrors';
-
 export 'package:hub/hub.dart';
+
+Class _Symb{
+    static Symbol encryptSymbol(String n){
+            return new Symbol(n);
+    }
+    
+    static String decryptSymbol(Symbol n){
+            return MirrorSystem.getName(n);
+    }
+}
 
 class SingleLibraryManager{
   Symbol tag;
@@ -18,19 +27,20 @@ class SingleLibraryManager{
   }
   
   SingleLibraryManager(name){
-    this.tag = Hub.encryptSymbol(name); 
+    this.tag = _Symb.encryptSymbol(name); 
     this._initLibrary();
   }
   
   SingleLibraryManager.use(name,LibraryMirror lib){
-    this.tag = Hub.encryptSymbol(name);
+    this.tag = _Symb.encryptSymbol(name);
     this.library = lib;
   }
   
   void _initLibrary(){
     try{
       var lib = this.ms.findLibrary(this.tag);
-      if(lib == null) throw "Unable to find Library: ${Hub.decryptSymbol(this.tag)}";
+      if(lib == null) 
+        throw "Unable to find Library: ${_Symb.decryptSymbol(this.tag)}";
       //this.library = lib.single;
     }catch(e){
       throw "Library Not Found ${this.tag}";
@@ -38,7 +48,7 @@ class SingleLibraryManager{
   }
   
   bool matchClassWithInterface(String className,String interfaceName){
-    var simpleIName = Hub.encryptSymbol(interfaceName);
+    var simpleIName = _Symb.encryptSymbol(interfaceName);
     var cl = this.getClass(className);
     if(cl == null) return false;
     var  ci = cl.superinterfaces;
@@ -50,23 +60,23 @@ class SingleLibraryManager{
   }
     
   dynamic getClass(String name){
-    return this.library.declarations[Hub.encryptSymbol(name)];
+    return this.library.declarations[_Symb.encryptSymbol(name)];
   }
   
   dynamic getSetter(String name){
-    return this.library.declarations[Hub.encryptSymbol(name)];
+    return this.library.declarations[_Symb.encryptSymbol(name)];
   }
     
   dynamic getGetter(String name){
-    return this.library.declarations[Hub.encryptSymbol(name)];  
+    return this.library.declarations[_Symb.encryptSymbol(name)];  
   }
   
   dynamic getFunction(String name){
-    return this.library.declarations[Hub.encryptSymbol(name)];
+    return this.library.declarations[_Symb.encryptSymbol(name)];
   }
     
   dynamic getVariable(String name){
-    return this.library.declarations[Hub.encryptSymbol(name)];
+    return this.library.declarations[_Symb.encryptSymbol(name)];
   }
   
   Map getAllMembers(String name){

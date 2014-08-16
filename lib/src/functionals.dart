@@ -248,26 +248,55 @@ class Funcs{
   static Function matchAnyValue(List a,[Function matcher(m,n)]){
       matcher = Funcs.switchUnless(matcher,Valids.match);
       return (f,Function suc,[Function fail]){
-        Enums.eachAsyn(a,(e,i,o,fn){
+      if(a.isEmpty) return;
+      else{
+        Enums.eachAsync(a,(e,i,o,fn){
           if(matcher(f,e)) return fn(e);
           return fn(null);
         },(_,err){
-          if(Valids.exist(err)) return suc(f,e,a);
-          return Valids.exist(fail) && fail(null,e,a);
+          if(Valids.exist(err)) return suc(f,err,a);
+          return Valids.exist(fail) && fail(f,err,a);
         });
       };
+     };
   }
 
-  static Function matchListConditions([List<Function> sets]){
+  static Function matchAny(Function suc,Function fail,[Function match]){
+    var ma = Funcs.matchAnyBy(suc,fail,match);
+    return (a,val){
+      return ma(a)(val);
+    };
+  }
+
+  static Function matchAnyWith(List a,Function suc,Function fail,[Function match]){
+    var ma = Funcs.matchAnyBy(suc,fail,match)(a);
+    return (val){
+      return ma(val);
+    };
+  }
+
+  static Function matchAnyBy(Function suc,Function fail,[Function match]){
+    return (a){
+      var partial = Funcs.matchAnyValue(a,match);
+      return (val){
+        return partial(val,suc,fail);
+      };
+    };
+  }
+
+  static Function matchListConditions(List<Function> sets){
     return (r){
       var future  = new Completer();
-      Enums.eachSync(sets,(e,i,o,fn){
-        var state = e(o);
-        if(!!state) return fn(false);
-        future.completeError(new Exception("Function check at index $i failed!"));
-      },(o,err){
-        future.complete(r);
-      });
+      if(set.isEmpty) future.completeError("List is empty!");
+      else{
+        Enums.eachSync(sets,(e,i,o,fn){
+          var state = e(o);
+          if(!!state) return fn(false);
+          future.completeError(new Exception("Function check at index $i failed!"));
+        },(o,err){
+          future.complete(r);
+        });
+      }
       
       return future.future;
     };
@@ -337,7 +366,29 @@ class Funcs{
     return null;
   }
   
+  static Function base10ListFunctionator(Function g,int m){
+    if(m == 1) return (v){ return g([v]); };
+    if(m == 2) return (a,[b]){ return g([a,b]); };
+    if(m == 3) return (a,[b,c]){ return g([a,b,c]); };
+    if(m == 4) return (a,[b,c,d]){ return g([a,b,c,d]); };
+    if(m == 5) return (a,[b,c,d,e]){ return g([a,b,c,d,e]); };
+    if(m == 6) return (a,[b,c,d,e,f]){ return g([a,b,c,d,e,f]); };
+    if(m == 7) return (a,[b,c,d,e,f,h]){ return g([a,b,c,d,e,f,h]); };
+    if(m == 8) return (a,[b,c,d,e,f,h,i]){ return g([a,b,c,d,e,f,h,i]); };
+    if(m == 9) return (a,[b,c,d,e,f,h,i,j]){ return g([a,b,c,d,e,f,h,i,j]); };
+    if(m == 10) return (a,[b,c,d,e,f,h,i,j,k]){ return g([a,b,c,d,e,f,h,i,j,k]); };
+    return null;
+  }
   
+  static Function composeList(Function n,Function m,[int args]){
+    args = (args == null ? 1 : args);
+    return Funcs.composableList(n, m, args,(j,k){
+      return (b){
+        return j(k(b));
+      };
+    });
+  }
+
   static Function compose(Function n,Function m,[int args]){
     args = (args == null ? 1 : args);
     
@@ -355,43 +406,43 @@ class Funcs{
       };
     });
     
-    if(args == 4) return Funcs.composable(n, m, 3,(j,k){
+    if(args == 4) return Funcs.composable(n, m, 4,(j,k){
       return (a,[b,c,d]){
         return j(k(a,b,c,d));
       };
     });
     
-    if(args == 5) return Funcs.composable(n, m, 3,(j,k){
+    if(args == 5) return Funcs.composable(n, m, 5,(j,k){
       return (a,[b,c,d,e]){
         return j(k(a,b,c,d,e));
       };
     });
     
-    if(args == 6) return Funcs.composable(n, m, 3,(j,k){
+    if(args == 6) return Funcs.composable(n, m, 6,(j,k){
       return (a,[b,c,d,e,f]){
         return j(k(a,b,c,d,e,f));
       };
     });
     
-    if(args == 7) return Funcs.composable(n, m, 3,(j,k){
+    if(args == 7) return Funcs.composable(n, m, 6,(j,k){
       return (a,[b,c,d,e,f,h]){
         return j(k(a,b,c,d,e,f,h));
       };
     });
     
-    if(args == 8) return Funcs.composable(n, m, 3,(j,k){
+    if(args == 8) return Funcs.composable(n, m, 7,(j,k){
       return (a,[b,c,d,e,f,h,i]){
         return j(k(a,b,c,d,e,f,h,i));
       };
     });
     
-    if(args == 9) return Funcs.composable(n, m, 3,(j,k){
+    if(args == 9) return Funcs.composable(n, m, 8,(j,k){
       return (a,[b,c,d,e,f,h,i,j]){
         return j(k(a,b,c,d,e,f,h,i,j));
       };
     });
     
-    if(args == 10) return Funcs.composable(n, m, 3,(j,k){
+    if(args == 10) return Funcs.composable(n, m, 9,(j,k){
       return (a,[b,c,d,e,f,h,i,j,k]){
         return j(k(a,[b,c,d,e,f,h,i,j,k]));
       };
@@ -406,10 +457,14 @@ class Funcs{
     };
   }
 
+  static Function composableList(Function n,Function m,int i,Function reg){
+   return Funcs.base10ListFunctionator(reg(n,m), i);
+  }
 
   static Function composable(Function n,Function m,int i,Function reg){
    return Funcs.base10Functionator(reg(n,m), i);
   }
+
 
   static Function dualPartial(Function m){
       return (e){
@@ -446,9 +501,10 @@ class Funcs{
   }
 
   static List range(int n,[bool fill]){
+    fill = Funcs.switchUnless(fill,false);
     var rg = [];
     Funcs.cycle(n,(t){
-      rg.add( fill ? ((n-t)+1) : null);
+      rg.add(fill ? ((n-t)+1) : null);
     });
     return rg;
   }

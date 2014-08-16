@@ -112,6 +112,7 @@ class Enums{
   static dynamic compareEngineProcessor(List a,bool compare(g,b),[num start,num end,dynamic c,bool started]){
     start = Funcs.switchUnless(start,0);
     end = Funcs.switchUnless(end,a.length - 1);
+    started = Funcs.switchUnless(started,false);
     
     var cur = Funcs.switchUnless(c,a[start]);
 
@@ -150,6 +151,7 @@ class Enums{
     sorted = Funcs.switchUnless(sorted,Funcs.range(a.length));
     lt = Funcs.switchUnless(lt,0);
     st = Funcs.switchUnless(st,a.length - 1);
+    isUp = Funcs.switchUnless(isUp,false);
 
     if(a.isEmpty) return sorted;
 
