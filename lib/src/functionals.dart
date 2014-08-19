@@ -85,8 +85,11 @@ class Funcs{
     return res.join(joind);
   }
 
-  static Function single(List<Function> ops,[int x,Function gh]){
-      if(Valids.isOdd(ops.length)) ops = [Funcs.identity].addAll(ops);
+  static Function single(List<Function> ops,[int x,Function gh]){  
+    if(Valids.isOdd(ops.length)){
+        ops = [Funcs.identity];
+        ops.addAll(ops);
+      }
 
       if(ops.length <= 0) return gh;
 
@@ -100,7 +103,7 @@ class Funcs{
       return Funcs.single(ops,x,gh);
   }
 
-  static bool futureBind(){
+  static Function futureBind(){
     var ftrue = Funcs.alwaysTrue();
     var ffalse = Funcs.alwaysFalse();
     bool val = false;
@@ -165,7 +168,7 @@ class Funcs{
     };
   }
 
-  static Function tagLog(String t,dynamic n) => Funcs.debugOn(t,n);
+  static dynamic tagLog(String t,dynamic n) => Funcs.debugOn(t,n);
 
   static Function tag(String t,[String fmt]){
     return Funcs.tagDefer(Funcs.identity,1,fmt)(t);
@@ -185,9 +188,9 @@ class Funcs{
     return Funcs.dualPartial(Funcs.tagPrint)(tag);
   }
 
-  static Function debug = Funcs.tagPrint('#debug',Funcs.identity);
+  static dynamic debug = Funcs.tagPrint('#debug',Funcs.identity);
 
-  static Function tagPrint(String tag,Function n,[num sx,String format,Function nprinter,Function prettier]){
+  static dynamic tagPrint(String tag,Function n,[num sx,String format,Function nprinter,Function prettier]){
     format = Funcs.switchUnless(format,"{tag} -> {res}");
     prettier = Funcs.switchUnless(prettier,Funcs.identity);
     var fp = Funcs.switchUnless(nprinter,print);
@@ -197,7 +200,7 @@ class Funcs{
     },n,sx);
   }
 
-  static Function identity(n){
+  static dynamic identity(n){
       return n;
   }
 
@@ -245,7 +248,7 @@ class Funcs{
     };
   }
 
-  static Function matchAnyValue(List a,[Function matcher(m,n)]){
+  static Function matchAnyValue(List a,[bool matcher(m,n)]){
       matcher = Funcs.switchUnless(matcher,Valids.match);
       return (f,Function suc,[Function fail]){
       if(a.isEmpty) return;
@@ -287,7 +290,7 @@ class Funcs{
   static Function matchListConditions(List<Function> sets){
     return (r){
       var future  = new Completer();
-      if(set.isEmpty) future.completeError("List is empty!");
+      if(sets.isEmpty) future.completeError("List is empty!");
       else{
         Enums.eachSync(sets,(e,i,o,fn){
           var state = e(o);
@@ -347,7 +350,7 @@ class Funcs{
   }
   
   static Function captureConditions(dynamic n){
-     if(n is List) return Funcs.captureListCondition(n);
+     if(n is List) return Funcs.captureListConditions(n);
      return Funcs.captureMapConditions(n);
   }
   
@@ -579,7 +582,7 @@ class Funcs{
     return Funcs.compose((n){ return !n; },m,sx);
   }
 
-  static dynmic dartApply(Function n,[List a,Map m]){
+  static dynamic dartApply(Function n,[List a,Map m]){
     a = Funcs.switchUnless(a,[]);
     m = Hub.encryptNamedArguments(Funcs.switchUnless(m,{}));
     return Function.apply(n,a,m);

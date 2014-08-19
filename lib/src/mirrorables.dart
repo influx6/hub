@@ -6,7 +6,8 @@ import 'package:hub/hub.dart';
 import 'dart:mirrors';
 export 'package:hub/hub.dart';
 
-Class _Symb{
+class _Symb{
+  
     static Symbol encryptSymbol(String n){
             return new Symbol(n);
     }
