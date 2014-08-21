@@ -1,4 +1,4 @@
-part of hub;
+part of hubutils;
 
 class Enums{
 
@@ -201,10 +201,11 @@ class Enums{
     return Enums.nth(a,a.length - 1);
   }
   
-  static dynamic valueDiff(dynamc m,dynamic v){
+  static dynamic valueDiff(dynamic m,dynamic v){
     if(Valids.isString(m) && Valids.isString(v)) return Enums.valueDiff(m.split(''),v.split(''));
     if(Valids.isMap(m) && Valids.isMap(v)) return Enums.valueMapDiff(m,v);
     if(Valids.isList(m) && Valids.isList(v)) return Enums.valueListDiff(m,v);
+    return null;
   }
 
   static dynamic keyDiff(m,v){

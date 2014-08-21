@@ -1,4 +1,4 @@
-part of hub;
+part of hubutils;
 
 class Funcs{
 
@@ -180,7 +180,7 @@ class Funcs{
     };
   }
 
-  static Function debugOn(String tag,dynamic n){
+  static dynamic debugOn(String tag,dynamic n){
     return Funcs.tagPrint(tag,Funcs.identity)(n);
   }
 
@@ -258,7 +258,8 @@ class Funcs{
           return fn(null);
         },(_,err){
           if(Valids.exist(err)) return suc(f,err,a);
-          return Valids.exist(fail) && fail(f,err,a);
+          if(Valids.exist(fail)) fail(f,err,a);
+          return null;
         });
       };
      };
@@ -533,7 +534,7 @@ class Funcs{
 
   static dynamic when(bool f,Function n,[Function m]){
     if(!!f) return n();
-    return (m != null && m());
+    if(m != null) return m();
   }
 
   static dynamic then(Function m,Function n,[Function f,int s]){

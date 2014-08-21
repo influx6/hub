@@ -1,4 +1,4 @@
-library hub;
+library hubutils;
 
 import 'dart:math' as math;
 import 'dart:async';

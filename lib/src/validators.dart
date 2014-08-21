@@ -1,4 +1,4 @@
-part of hub;
+part of hubutils;
 
 class Valids{
 
@@ -17,6 +17,7 @@ class Valids{
   static bool isString(a) => a is String;
   static bool isNum(a) => a is num;
   static bool isInt(a) => a is int;
+  static bool isDouble(a) => a is int;
   static bool isRegExp(a) => a is RegExp;
   static bool isBool(a) => a is bool;
   static bool isDate(a) => a is DateTime;

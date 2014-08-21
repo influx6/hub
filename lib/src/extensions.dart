@@ -1,4 +1,4 @@
-part of hub;
+part of hubutils;
 
 Function _empty(t,s){}
 var _smallA = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
@@ -16,15 +16,15 @@ class Log{
     this.factori = Funcs.tagDeferable(this._flip,p,cs);
   }
 
-  Function log(String t,dynamic v,[String f]){
+  dynamic log(String t,dynamic v,[String f]){
     f = Funcs.switchUnless(f,this.format);
     return this.factori(t,v,f);
   }
 
   Function get flip => this._flip;
 
-  void get enable => this._flip(true);
-  void get disable => this._flip(false);
+  dynamic get enable => this._flip(true);
+  dynamic get disable => this._flip(false);
   bool get state => this._flip();
 
 }
@@ -42,8 +42,8 @@ class WrapperLog{
   Function get make => this._factori;
   Function get flip => this._flip;
 
-  void get enable => this._flip(true);
-  void get disable => this._flip(false);
+  dynamic get enable => this._flip(true);
+  dynamic get disable => this._flip(false);
   bool get state => this._flip();
 
 }
@@ -259,7 +259,7 @@ class Distributor<T>{
 
   Distributor(this.id);
   
-  void onOnce(Funcion n){
+  void onOnce(Function n){
     if(this.oncer.contains(n)) return;
     this.oncer.add(n);     
   }
@@ -791,11 +791,23 @@ class TaskQueue extends Queueable with DurationMixin{
   dynamic dequeueFirst() => this.dequeueAt(0);
   dynamic dequeueLast() => this.dequeueAt(this.tasks.length - 1);
 
-  void delay(int ms) => this._queueDelay = new Duration(milliseconds: ms);
-  void incDelay(int ms) => this.incMillisFn(this._queueDelay,ms);
-  void decDelay(int ms) => this.decMillisFn(this._queueDelay,ms);
-  void forceSingleRun() => this._forceSingleRun = true;
-  void disableSingleRun() => this._forceSingleRun = false;
+  void delay(int ms){ 
+    this._queueDelay = new Duration(milliseconds: ms);
+  }
+  void incDelay(int ms){
+    this.incMillisFn(this._queueDelay,ms);
+  }
+  
+  void decDelay(int ms){
+    this.decMillisFn(this._queueDelay,ms);
+  }
+  
+  void forceSingleRun(){ 
+    this._forceSingleRun = true; 
+  }
+  void disableSingleRun(){
+    this._forceSingleRun = false;
+  }
 
   bool get locked => !!this._lock;
   bool get empty => this.tasks.isEmpty && this.microtasks.isEmpty;
@@ -1104,3 +1116,46 @@ class FunctionalAtomic{
     }
 }
 
+
+class Middleware{
+  Function _middleMan;
+  List mwares;
+
+  static create(n) => new Middleware(n);
+
+  Middleware(Function midMan(n)){
+    this.mwares = new List();
+    this._middleMan = midMan;
+  }
+
+  Future ware(Function nware(data,Function next,Function faction),[bool catchError]){
+    var comp = new Completer();
+    this.mwares.add((nd,nx,ed){
+      var val;
+      try{
+        val = nware(nd,nx,ed);
+      }catch(e){
+        return comp.completeError(e);
+      }
+      return comp.complete(val);
+    });
+    return comp.future;
+  }
+
+  void _next(index,ndata,[bool kickout]){
+    kickout = Funcs.switchUnless(kickout,false);
+    if(!!kickout) return this._middleMan(ndata);
+    index += 1;
+    var cur = this.mwares[index];
+    return cur(ndata,([nd]){
+      return this._next(index,Funcs.switchUnless(nd,ndata),kickout);
+    },([nd]){
+      return this._next(index,Funcs.switchUnless(nd,ndata),true);
+    });
+  }
+
+  void emit(dynamic data){
+    return this._next(-1,data);
+  }
+
+}
