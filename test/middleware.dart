@@ -22,6 +22,12 @@ void main(){
   }).then(Funcs.tag('2nd run with'));
 
   ware.ware((d,next,end){
+    Funcs.tagLog('i hate you ',d);
+    new Timer(new Duration(milliseconds: 6000),(){ next('flix');});
+    return 'socks';
+  }).then(Funcs.tag('6th run with'));
+
+  ware.ware((d,next,end){
     Funcs.tagLog("i didn't really mean it ",d);
     next('please!');
     return 'socker'; // middleware can return a value to the future to complete with

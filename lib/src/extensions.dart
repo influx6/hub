@@ -582,6 +582,7 @@ class MapDecorator<T,K>{
 
     Map get core => this.storage;
 
+    Map get clone => new Map.from(this.core);
 }
 
 class Counter{
@@ -1119,21 +1120,21 @@ class FunctionalAtomic{
 
 class Middleware{
   Function _middleMan;
-  List mwares;
+  List _mwares;
 
-  static create(n) => new Middleware(n);
+  static create([n]) => new Middleware(n);
 
-  Middleware(Function midMan(n)){
-    this.mwares = new List();
-    this._middleMan = midMan;
+  Middleware([Function midMan(n)]){
+    this._middleMan = Valids.exist(midMan) ? midMan : (n){};
+    this._mwares = new List();
   }
 
-  Future ware(Function nware(data,Function next,Function faction),[bool catchError]){
+  Future ware(Function nware(data,Function next,Function faction)){
     var comp = new Completer();
-    this.mwares.add((nd,nx,ed){
+    this._mwares.add((df,nx,ed){
       var val;
       try{
-        val = nware(nd,nx,ed);
+        val = nware(df,nx,ed);
       }catch(e){
         return comp.completeError(e);
       }
@@ -1143,10 +1144,10 @@ class Middleware{
   }
 
   void _next(index,ndata,[bool kickout]){
-    kickout = Funcs.switchUnless(kickout,false);
-    if(!!kickout) return this._middleMan(ndata);
     index += 1;
-    var cur = this.mwares[index];
+    kickout = Funcs.switchUnless(kickout,false);
+    if(!!kickout || index >= this.size) return this._middleMan(ndata);
+    var cur = this._mwares[index];
     return cur(ndata,([nd]){
       return this._next(index,Funcs.switchUnless(nd,ndata),kickout);
     },([nd]){
@@ -1155,7 +1156,187 @@ class Middleware{
   }
 
   void emit(dynamic data){
+    if(this._mwares.isEmpty) return null;
     return this._next(-1,data);
   }
 
+  void clear(){
+    this._mwares.clear();
+  }
+
+  int get size => this._mwares.length;
 }
+
+class JazzAtomState{
+  final String id;
+  final Exception error;
+  final Map meta;
+  final bool state;
+
+  static JazzAtomState create(r,s,[m,e]) => new JazzAtomState(r,s,m,e);
+  JazzAtomState(this.id,this.state,[this.meta,this.error]);
+}
+
+class JazzAtom{
+  Function _emitter;
+  final String description;
+  Middlware _groupware;
+  List _done;
+  List _states;
+
+  static create(d,[fn]) => new JazzAtom(d,fn);
+  JazzAtom(this.description,[Function laterfn]){ 
+    this._groupware = Middleware.create();
+    this._done = new List();
+    this._states = new List();
+
+    var finalizer = (n){
+        var ls = []..addAll(this._states);
+        this._states.clear();
+        return ls;
+    };
+
+    this._emitter = Funcs.composeList((n){
+      this._groupware.emit(n);
+      var waits = Future.wait([]..addAll(this._done));
+      if(Valids.exist(laterfn)) laterfn(waits.then(finalizer,onError:finalizer));
+      this._done.clear();
+      return waits;
+    },Enums.addUntilNull,10);
+  }
+
+  Future _handleRack(String desc,Future t,[Function metaFus]){
+    this._done.add(t);
+    return t.then((n){
+      var jst = JazzAtomState.create(desc,true,{},null);
+      if(Valids.exist(metaFus)) metaFus(jst);
+      this._states.add(jst);
+    },onError: (e){
+      var jst = JazzAtomState.create(desc,false,{},e);
+      if(Valids.exist(metaFus)) metaFus(jst);
+      this._states.add(jst);
+    });
+  }
+
+  JazzAtom rack(String desc,Function unit){
+    this._handleRack(desc,this._groupware.ware((d,next,end){
+      var val = Funcs.dartApply(unit,d);
+      next([val]);
+      return val;
+    }));
+    return this;
+  }
+
+  JazzAtom rackAsync(String desc,Function unit){
+    this._handleRack(desc,this._groupware.ware((d,next,end){
+      var m = []..addAll(d)..add(() => next());
+      var val = Funcs.dartApply(unit,m);
+      return val;
+    }));
+    return this;
+  }
+
+  JazzAtom clock(String desc,Function unit){
+    var now = new DateTime.now();
+    this._handleRack(desc,this._groupware.ware((d,next,end){
+      var val = Funcs.dartApply(unit,d);
+      next([val]);
+      return val;
+    }),(jst){
+      jst.meta['startTime'] = now;
+      jst.meta['endTime'] = new DateTime.now();
+      jst.meta['delta'] = jst.meta['endTime'].difference(jst.meta['startTime']);
+    });
+    return this;
+  }
+
+  JazzAtom clockAsync(String desc,Function unit){
+    var now = new DateTime.now();
+    this._handleRack(desc,this._groupware.ware((d,next,end){
+      var m = []..addAll(d)..add(() => next());
+      var val = Funcs.dartApply(unit,m);
+      return val;
+    }),(jst){
+      jst.meta['startTime'] = now;
+      jst.meta['endTime'] = new DateTime.now();
+      jst.meta['delta'] = jst.meta['endTime'].difference(jst.meta['startTime']);
+    });
+    return this;
+  }
+
+  Future get emit => this._emitter;
+  
+}
+
+class JazzGroups{
+  final String description;
+  MapDecorator atoms;
+  MapDecorator atomStates;
+  List _doneAtoms;
+
+  static JazzGroups create(String d,[Function n]){
+    var jz = new JazzGroups(d);
+    if(Valids.exist(n)) n(jz);
+    return jz;
+  }
+
+  JazzGroups(this.description){
+    this.atoms = MapDecorator.useMap(new Map<String,JazzAtom>());
+    this.atomStates = MapDecorator.create();
+    this._doneAtoms = new List();
+  }
+  
+  JazzAtom test(String desc){
+    if(this.atoms.has(desc)) return this.atoms.get(desc);
+    var am = JazzAtom.create(desc,(f){
+      f.then((_){
+         this.atomStates.update(desc,_);
+      });
+      this._doneAtoms.add(f);
+    });
+    this.atoms.add(desc,am);
+    return am;
+  }
+
+  Future init(){
+    var wait = Future.wait(this._doneAtoms);
+    return wait.then((f){
+      return { 'id':this.description, 'states':this.atomStates.clone };
+    });
+  }
+}
+
+
+class Jazz{
+  MapDecorator units;
+
+  static Jazz create([Function n]){
+    var jz = new Jazz();
+    if(Valids.exist(n)) n(jz);
+    return jz;
+  }
+
+  Jazz(){
+    this.units = MapDecorator.useMap(new Map<String,JazzGroup>());
+  }
+  
+  JazzGroups group(String desc,Function g){
+    if(this.units.has(desc)) return this.units.get(desc);
+    var jz = JazzGroups.create(desc,g);
+    this.units.add(desc,jz);
+    return jz;
+  }
+
+  Future init(){
+    var list = [], funits = new Completer();
+    Enums.eachAsync(this.units.core,(e,i,o,fn){
+      list.add(e.init());
+      return fn(null);
+    },(_,err){
+      Future.wait(list).then(funits.complete).catchError(funits.completeError);
+    });
+    return funits.future;
+  }
+}
+
+

@@ -2,6 +2,25 @@ part of hubutils;
 
 class Enums{
 
+  static List addUntilNull(List a){
+    var vals = [];
+    Enums.eachAsync(a,(e,i,o,fn){
+      if(Valids.notExist(e)) return fn(true);
+      vals.add(e);
+      return fn(null);
+    });
+    return vals;
+  }
+
+  static List removeNull(List a){
+    var vals = [];
+    Enums.eachAsync(a,(e,i,o,fn){
+      if(Valids.exist(e)) vals.add(e);
+      return fn(null);
+    });
+    return vals;
+  }
+
   static dynamic flatten(dynamic n,[dynamic m]){
     if(n is List) return Enums.flattenList(n,m);
     if(n is Map) return Enums.flattenMap(n,m);
