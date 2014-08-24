@@ -8,12 +8,14 @@ import 'package:hub/hub.dart';
 void main(){
   
   var jazz = Jazz.create();
+  var view = ConsoleView.create();
+  view.watch(jazz);
 
   jazz.group('testing basic runs',(g){
   
     g.test('can i run sync')
     .rack('can i pass',(d) => d == 1)
-    .clock('can i fail',(d) => d == 1)
+    .clock('can i fail',(d){ return d == 1;})
     .emit(1);
 
     g.test('can i run async')
@@ -34,5 +36,6 @@ void main(){
 
   });
 
-  jazz.init().then(Funcs.tag('jazz'));
+  jazz.init().then(Funcs.tag('wow'));
+
 }
