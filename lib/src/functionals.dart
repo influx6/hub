@@ -148,7 +148,7 @@ class Funcs{
     };
   }
 
-  static Function defferedDebugLog(Function check){
+  static Function messageLog(Function check){
     return (tag,Function op,[num sx,String format,Function n,Function p]){
       p = Funcs.switchUnless(p,Funcs.identity);
       var initr = (message){
@@ -174,9 +174,15 @@ class Funcs{
     return Funcs.tagDefer(Funcs.identity,1,fmt)(t);
   }
 
-  static Function tagDefer(dynamic n,[int m,String fmt]){
+  static Function tagDefer(dynamic n,[int m,String fmt,Function np,Function pr]){
     return (String tag){
-      return Funcs.tagPrint(tag,n,m,fmt);
+      return Funcs.tagPrint(tag,n,m,fmt,np,pr);
+    };
+  }
+
+  static Function formatDefer([String fmt,Function pr]){
+    return (String tag){
+      return Funcs.useformat(tag,fmt,pr);
     };
   }
 
@@ -189,6 +195,31 @@ class Funcs{
   }
 
   static dynamic debug = Funcs.tagPrint('#debug',Funcs.identity);
+
+  static String stampNow(String format,List n,[Function pr]){
+    return Funcs.stamp(format,pr)(n);
+  }
+
+  static dynamic stamp(String format,[Function prettier]){
+    prettier = Funcs.switchUnless(prettier,Funcs.identity);
+    return (List n){
+      var pretty = prettier(format).toString();
+      var index = 0;
+      n.forEach((f){
+        pretty = pretty.replaceAll('{$index}',f.toString());
+        index += 1;
+      });
+      return pretty;
+    };
+  }
+
+  static dynamic useFormat(String tag,[String format,Function prettier]){
+    format = Funcs.switchUnless(format,"{tag} -> {res}");
+    prettier = Funcs.switchUnless(prettier,Funcs.identity);
+    return (n){
+      return (prettier(format).toString().replaceAll('{tag}',tag).replaceAll('{res}',n.toString()));
+    };
+  }
 
   static dynamic tagPrint(String tag,Function n,[num sx,String format,Function nprinter,Function prettier]){
     format = Funcs.switchUnless(format,"{tag} -> {res}");

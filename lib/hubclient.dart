@@ -1,9 +1,21 @@
 library hubclient;
 
 import 'dart:js';
+import 'dart:html';
 import 'package:hub/hub.dart';
 
 export 'package:hub/hub.dart';
+
+class HtmlView extends JazzView{
+  Element root;
+
+  static create(n) => new HtmlView(n);
+  HtmlView(this.root):super();
+
+  void process(data){
+
+  }
+}
 
 class JStripe{
 	final fragments = Hub.createMapDecorator();

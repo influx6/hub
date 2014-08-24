@@ -36,6 +36,5 @@ void main(){
 
   });
 
-  jazz.init().then(Funcs.tag('wow'));
 
 }

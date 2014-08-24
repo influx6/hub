@@ -1183,15 +1183,22 @@ class JazzAtom{
   Middlware _groupware;
   List _done;
   List _states;
+  int _failCount;
 
   static create(d,[fn]) => new JazzAtom(d,fn);
+
   JazzAtom(this.description,[Function laterfn]){ 
+    this._failCount = 0;
     this._groupware = Middleware.create();
     this._done = new List();
     this._states = new List();
 
     var finalizer = (n){
-        var ls = []..addAll(this._states);
+        var ls = [{
+          'total': this._groupware.size,
+          'fail': this._failCount, 
+          'passed': this._groupware.size - this._failCount
+        }]..addAll(this._states);
         this._states.clear();
         return ls;
     };
@@ -1212,6 +1219,7 @@ class JazzAtom{
       if(Valids.exist(metaFus)) metaFus(jst);
       this._states.add(jst);
     },onError: (e){
+      this._failCount += 1;
       var jst = JazzAtomState.create(desc,false,{},e);
       if(Valids.exist(metaFus)) metaFus(jst);
       this._states.add(jst);
@@ -1273,6 +1281,7 @@ class JazzGroups{
   MapDecorator atoms;
   MapDecorator atomStates;
   List _doneAtoms;
+  int failCount,passedCount,total;
 
   static JazzGroups create(String d,[Function n]){
     var jz = new JazzGroups(d);
@@ -1281,6 +1290,9 @@ class JazzGroups{
   }
 
   JazzGroups(this.description){
+    this.failCount = 0;
+    this.passedCount = 0;
+    this.total = 0;
     this.atoms = MapDecorator.useMap(new Map<String,JazzAtom>());
     this.atomStates = MapDecorator.create();
     this._doneAtoms = new List();
@@ -1288,8 +1300,12 @@ class JazzGroups{
   
   JazzAtom test(String desc){
     if(this.atoms.has(desc)) return this.atoms.get(desc);
-    var am = JazzAtom.create(desc,(f){
+    var stat,am = JazzAtom.create(desc,(f){
       f.then((_){
+         stat = _[0];
+         this.failCount +=  stat['fail'];
+         this.passedCount +=  stat['passed'];
+         this.total += stat['total'];
          this.atomStates.update(desc,_);
       });
       this._doneAtoms.add(f);
@@ -1301,7 +1317,13 @@ class JazzGroups{
   Future init(){
     var wait = Future.wait(this._doneAtoms);
     return wait.then((f){
-      return { 'id':this.description, 'states':this.atomStates.clone };
+      return { 
+        'id':this.description, 
+        'testTotal': this.atoms.core.length,
+        'total': this.total,
+        'passed': this.passedCount,'failed':this.failCount,
+        'states':this.atomStates.clone 
+      };
     });
   }
 }
@@ -1309,6 +1331,7 @@ class JazzGroups{
 
 class Jazz{
   MapDecorator units;
+  Distributor watchers;
 
   static Jazz create([Function n]){
     var jz = new Jazz();
@@ -1318,6 +1341,7 @@ class Jazz{
 
   Jazz(){
     this.units = MapDecorator.useMap(new Map<String,JazzGroup>());
+    this.watchers = Distributor.create('jazz-watchers');
   }
   
   JazzGroups group(String desc,Function g){
@@ -1327,6 +1351,8 @@ class Jazz{
     return jz;
   }
 
+  int get size => this.units.core.length;
+
   Future init(){
     var list = [], funits = new Completer();
     Enums.eachAsync(this.units.core,(e,i,o,fn){
@@ -1335,8 +1361,112 @@ class Jazz{
     },(_,err){
       Future.wait(list).then(funits.complete).catchError(funits.completeError);
     });
+    funits.future.then((n){
+      this.watchers.emit(n);
+    });
     return funits.future;
   }
 }
 
+abstract class _JazzView{
+  void process(List n);
+  void watch(Jazz z);
+  void unwatch(Jazz z);
+  void unwatchAll();
+}
 
+class JazzView extends _JazzView{
+  List _watches;
+
+  static void jazzIterator(Map data,Function gfn,Function afn,Function jsfn,Function donefn){
+    Enums.eachAsync(data,(Map e,i,o,fn){
+      gfn(e,e['id']);
+      if(!e.containsKey('states')) return null;
+      Enums.eachAsync(e['states'],(v,n,g,fx){
+        afn(v[0],n);
+        Enums.eachAsync(v,(k,h,r,gx){
+          if(k is JazzAtomState) jsfn(k,h);
+          return gx(null);
+        },(_,vx){
+          return fx(null);
+        });
+      },(_,ex){
+        return fn(null);
+      });
+    },(_,err){
+      return donefn();
+    });
+
+  }
+
+  JazzView(){
+    this._watches = new List<Jazz>();
+  }
+
+  void watch(Jazz z){
+    if(this._watches.contains(z)) return null;
+    this._watches.add(z);
+    z.watchers.on(this.process);
+  }
+
+  void unwatch(Jazz z){
+    if(this._watches.contains(z)){
+      z.watchers.off(this.process);
+    }
+  }
+
+  void unwatchAll(){
+    this._watches.forEach((f){
+      f.watchers.off(this.process);
+    });
+  }
+}
+
+class ConsoleView extends JazzView{
+  String gtemp,atemp;
+  Function gt,at;
+  Function printer;
+
+  static create([gs,ts,fn]) => new ConsoleView(gs,ts,fn);
+
+  ConsoleView([String gs,String ts,Function pr]):super(){
+    this.printer = FUncs.switchUnless(pr,print);
+    this.gtemp = Funcs.switchUnless(gs,"{0}: #{1} -> {2}");
+    this.atemp = Funcs.switchUnless(ts,this.gtemp);
+    this.gt = Funcs.stamp(gtemp);
+    this.at = Funcs.stamp(atemp);
+  }
+
+  void process(data){
+    var buffer = new StringBuffer();
+    buffer.write("---------------------------------------");
+    buffer.write("\n");
+    buffer.write("Jazz Tests Results");
+    buffer.write("\n");
+    buffer.write("---------------------------------------");
+    buffer.write("\n");
+    
+    JazzView.jazzIterator(data,(g,id){
+      var tests = g['testTotal'],total = g['total'], passed = g['passed'],fail = g['failed'];
+      buffer.write("\n");
+      buffer.write(this.gt(['Group',id,'Total Tests: $tests, Total Atoms: $total, Passed Atoms: $passed, Failed Atoms: $fail ']));
+      buffer.write("\n");
+    },(meta,id){
+      buffer.write("\n");
+      buffer.write(this.at(['-> Atom',id,'Total: ${meta['total']}, Failed: ${meta['fail']} Passed: ${meta['passed']}']));
+    },(atom,id){
+      buffer.write("\n");
+      var delta = atom.meta['delta'];
+      var start = atom.meta['startTime'];
+      var end = atom.meta['endTime'];
+      buffer.write(this.at(['--> Atom Test',atom.id,'State: ${!!atom.state ?'Passed':'Failed'} \n---->Error: ${atom.error} ']));
+      buffer.write('\n---->StartTime: ${start == null ? null : start }');
+      buffer.write('\n---->EndTime: ${end == null ? null : end }');
+      buffer.write('\n---->RunTime: ${delta == null ? null : delta.inMilliseconds }ms');
+      buffer.write("\n");
+    },(){
+      this.printer(buffer.toString());
+    });
+  }
+
+}
