@@ -1430,7 +1430,7 @@ class ConsoleView extends JazzView{
   static create([gs,ts,fn]) => new ConsoleView(gs,ts,fn);
 
   ConsoleView([String gs,String ts,Function pr]):super(){
-    this.printer = FUncs.switchUnless(pr,print);
+    this.printer = Funcs.switchUnless(pr,print);
     this.gtemp = Funcs.switchUnless(gs,"{0}: #{1} -> {2}");
     this.atemp = Funcs.switchUnless(ts,this.gtemp);
     this.gt = Funcs.stamp(gtemp);
@@ -1441,10 +1441,11 @@ class ConsoleView extends JazzView{
     var buffer = new StringBuffer();
     buffer.write("---------------------------------------");
     buffer.write("\n");
-    buffer.write("Jazz Tests Results");
+    buffer.write("        Jazz Tests Results");
     buffer.write("\n");
     buffer.write("---------------------------------------");
     buffer.write("\n");
+    var count = 0;
     
     JazzView.jazzIterator(data,(g,id){
       var tests = g['testTotal'],total = g['total'], passed = g['passed'],fail = g['failed'];
@@ -1453,20 +1454,37 @@ class ConsoleView extends JazzView{
       buffer.write("\n");
     },(meta,id){
       buffer.write("\n");
+      count = 0;
       buffer.write(this.at(['-> Atom',id,'Total: ${meta['total']}, Failed: ${meta['fail']} Passed: ${meta['passed']}']));
+      buffer.write('\n------------------------------------------------------------------\n');
     },(atom,id){
+      count += 1;
       buffer.write("\n");
       var delta = atom.meta['delta'];
       var start = atom.meta['startTime'];
       var end = atom.meta['endTime'];
-      buffer.write(this.at(['--> Atom Test',atom.id,'State: ${!!atom.state ?'Passed':'Failed'} \n---->Error: ${atom.error} ']));
-      buffer.write('\n---->StartTime: ${start == null ? null : start }');
-      buffer.write('\n---->EndTime: ${end == null ? null : end }');
-      buffer.write('\n---->RunTime: ${delta == null ? null : delta.inMilliseconds }ms');
+      buffer.write(this.at(['  Atom Unit',atom.id,'State: ${!!atom.state ?'Passed':'Failed'}']));
+      /*buffer.write('\n------------------------------------------------------------------');*/
+      if(Valids.exist(atom.error)){
+        buffer.write('\n    Error: ${atom.error}');
+      }
+      if(delta != null){
+        buffer.write('\n    StartTime: ${start == null ? null : start }');
+        buffer.write('\n    EndTime: ${end == null ? null : end }');
+        buffer.write('\n    RunTime: ${delta == null ? null : delta.inMilliseconds }ms');
+      }
       buffer.write("\n");
     },(){
       this.printer(buffer.toString());
     });
   }
 
+}
+
+final ConsoleView jazzConsole = ConsoleView.create();
+Function jazzUp(Function init){
+ var jz = Jazz.create();
+ jazzConsole.watch(jz);
+ init(jz);
+ return jz.init();
 }
