@@ -8,6 +8,7 @@ import 'package:hub/hubclient.dart';
 
 void main(){
 
+  var es = new Example('es');
   stripjs.fragment('console');
   stripjs.register('console','log'); 
   stripjs.runOn('console','log')('socker!'); 

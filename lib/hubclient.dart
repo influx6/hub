@@ -41,115 +41,129 @@ class HtmlView extends JazzView{
 }
 
 class JStripe{
-	final fragments = Hub.createMapDecorator();
-	final methodfragments = Hub.createMapDecorator();
-	final JsObject defaultContext = context;
-        Funcstion _apply;
-	JsObject root;
-	dynamic core;
+  final fragments = Hub.createMapDecorator();
+  final methodfragments = Hub.createMapDecorator();
+  final JsObject defaultContext = context;
+  Funcstion _apply;
+  JsObject root;
+  dynamic core;
 
-	static create(s) => new JStripe(s);
+  static create(s) => new JStripe(s);
 
-	JStripe(t){
-          this.core = t;
-          this.root = new JsObject.fromBrowserObject(t);
-          this.fragments.add('root',this.root);
-          this._apply = Funcs.composeList((n){
-            var clean = Enums.addUntilNull(n),
-                path = Enums.yankFirst(clean);
-           var fn = this.at(path);
-           if(Valids.notExist(fn)) return null;
-           return Funcs.dartApply(fn,clean);
-          },Funcs.identity,10);
-	}
+  JStripe(t){
+    this.core = t;
+    this.root = new JsObject.fromBrowserObject(t);
+    this.fragments.add('root',this.root);
+    this._apply = Funcs.composeList((n){
+      var clean = Enums.addUntilNull(n),
+          path = Enums.yankFirst(clean);
+     var fn = this.at(path);
+     if(Valids.notExist(fn)) return null;
+     return Funcs.dartApply(fn,clean);
+    },Funcs.identity,10);
+  }
 
-        Function get apply => this._apply;
+  //converts a native dart object into a js object
+  /*dynamic convert(Object d){*/
+  /*  if(d is String || d is num || d == null || d is bool) */
+  /*    throw "Cant convert String,num and bool or null objects";*/
+  /*  return new JsObject.fromBrowserObject(d);*/
+  /*}*/
 
-        dynamic jsFragment(String tag,[String prop]){
-          var fragment = this.fragments.get(tag);
-          if(fragment == null) return null;
-          if(prop == null) return fragment;
-          return this.grabProperty(fragment,prop);
-        }
+  //converts a native dart object into jsobject and adds it into the fragment list for use
+  /*dynamic addNative(String tag,Object d){*/
+  /*  var frag = this.convert(d);*/
+  /*  this.fragments.add(tag,frag);*/
+  /*  return frag;*/
+  /*}*/
 
-        bool set(String tag,String prop,dynamic val,[String inprop]){
-          var fragment = this.jsFragment(tag,inprop);
-          if(fragment == null) return false;
-          fragment[prop] = val;
-          return true;
-        }
+  Function get apply => this._apply;
 
-        Function at(String path){
-          var pieces = path.split('@');
-          if(pieces.length <= 0 || pieces.length > 3) return null;
-          return Funcs.dartApply(this.runOn,pieces);
-        }
+  dynamic jsFragment(String tag,[String prop]){
+    var fragment = this.fragments.get(tag);
+    if(fragment == null) return null;
+    if(prop == null) return fragment;
+    return this.grabProperty(fragment,prop);
+  }
 
-        void register(String tag,[String method,String prop]){
-          this.fragment(tag);
-          if(Valids.exist(method))
-            return this.methodFragment(tag,method,prop);
-          return null;
-        }
+  bool set(String tag,String prop,dynamic val,[String inprop]){
+    var fragment = this.jsFragment(tag,inprop);
+    if(fragment == null) return false;
+    fragment[prop] = val;
+    return true;
+  }
 
-	void fragment(String tag){
-          this.fragments.add(tag,this.root[tag]);
-	}
+  Function at(String path){
+    var pieces = path.split('@');
+    if(pieces.length <= 0 || pieces.length > 3) return null;
+    return Funcs.dartApply(this.runOn,pieces);
+  }
 
-	dynamic grabProperty(JsObject fragment,String props){
-          var sets = props.split('.'), ind = 0, cur = fragment;
+  void register(String tag,[String method,String prop]){
+    this.fragment(tag);
+    if(Valids.exist(method))
+      return this.methodFragment(tag,method,prop);
+    return null;
+  }
 
-          while(ind < sets.length){
-            if(cur == null || ind >= sets.length) return cur;
-            cur = cur[sets[ind]];
-            ind += 1;
-          }
+  void fragment(String tag){
+    this.fragments.add(tag,this.root[tag]);
+  }
 
-          return cur;
-	}
+  dynamic grabProperty(JsObject fragment,String props){
+    var sets = props.split('.'), ind = 0, cur = fragment;
 
-	void methodFragment(String tag,String method,[String prop]){
-          if(!this.fragments.has(tag)) return;
+    while(ind < sets.length){
+      if(cur == null || ind >= sets.length) return cur;
+      cur = cur[sets[ind]];
+      ind += 1;
+    }
 
-          var fragment = this.fragments.get(tag);
-          var methods = (this.methodfragments.has(tag) ? this.methodfragments.get(tag) : Hub.createMapDecorator());
-          
-          var inProp = (prop != null ? prop : method).toString();
+    return cur;
+  }
 
-          var mf = this.grabProperty(fragment,inProp);
-          if(mf == null) return;
+  void methodFragment(String tag,String method,[String prop]){
+    if(!this.fragments.has(tag)) return;
 
-          methods.add(method,(List ops){
-            if(mf is JsFunction) 
-              return mf.apply(ops,thisArg: fragment);
-            return mf;
-          });
+    var fragment = this.fragments.get(tag);
+    var methods = (this.methodfragments.has(tag) ? this.methodfragments.get(tag) : Hub.createMapDecorator());
+    
+    var inProp = (prop != null ? prop : method).toString();
 
-          this.methodfragments.add(tag,methods);
-	}
+    var mf = this.grabProperty(fragment,inProp);
+    if(mf == null) return;
 
-	dynamic runOn(String tag,String fragment,[String method]){
-          if(!this.fragments.has(tag) || !this.methodfragments.has(tag)) return null;
-          var methods = this.methodfragments.get(tag);
-          var frag = methods.get(fragment);
-          return ([dynamic extra]){
-            var args = new List();
-            if(method != null) args.add(method);
-            if(extra is List) args.addAll(extra);
-            else args.add(extra);
-            return frag(args);
-          };
-	}
+    methods.add(method,(List ops){
+      if(mf is JsFunction) 
+        return mf.apply(ops,thisArg: fragment);
+      return mf;
+    });
+
+    this.methodfragments.add(tag,methods);
+  }
+
+  dynamic runOn(String tag,String fragment,[String method]){
+    if(!this.fragments.has(tag) || !this.methodfragments.has(tag)) return null;
+    var methods = this.methodfragments.get(tag);
+    var frag = methods.get(fragment);
+    return ([dynamic extra]){
+      var args = new List();
+      if(method != null) args.add(method);
+      if(extra is List) args.addAll(extra);
+      else args.add(extra);
+      return frag(args);
+    };
+  }
+
+  dynamic toDartJSON(JsObject m){
+    return context['JSON'].callMethod('stringify',[m]);  
+  }
   
-	dynamic toDartJSON(JsObject m){
-	  return context['JSON'].callMethod('stringify',[m]);  
-	}
-	
-	dynamic toJS(dynamic m){
-		return new JsObject.jsify(m);
-	}
+  dynamic toJS(dynamic m){
+          return new JsObject.jsify(m);
+  }
 
-	String toString(){
-		return "${this.fragments} \n ${this.methodfragments}";
-	}
+  String toString(){
+          return "${this.fragments} \n ${this.methodfragments}";
+  }
 }
