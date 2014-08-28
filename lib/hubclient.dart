@@ -392,6 +392,7 @@ class HtmlView extends JazzView{
          this.insertPoint.append(new Element.html(f.toString()));
        });
        gbuff.clear();
+       cset = gset = 0;
     },(fx){
       var atoms = ubuff.join('\n');
       var sets = sbuff[cset];
@@ -406,6 +407,7 @@ class HtmlView extends JazzView{
       gs = gs.replaceAll("{{atomsets_buffer}}",asets);
       gbuff[gset] = gs;
       gset += 1;
+      cset -= 1;
       sbuff.clear();
       ex(null);
     });
