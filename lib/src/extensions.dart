@@ -1149,9 +1149,11 @@ class Middleware{
     if(!!kickout || index >= this.size) return this._middleMan(ndata);
     var cur = this._mwares[index];
     return cur(ndata,([nd]){
-      return this._next(index,Funcs.switchUnless(nd,ndata),kickout);
+      var fx = Valids.exist(nd) ? nd : ndata;
+      return this._next(index,fx,kickout);
     },([nd]){
-      return this._next(index,Funcs.switchUnless(nd,ndata),true);
+      var fx = Valids.exist(nd) ? nd : ndata;
+      return this._next(index,fx,true);
     });
   }
 
@@ -1229,7 +1231,7 @@ class JazzAtom{
   JazzAtom rack(String desc,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
       var val = Funcs.dartApply(unit,d);
-      next([val]);
+      next();
       return val;
     }));
     return this;
@@ -1248,7 +1250,7 @@ class JazzAtom{
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
       var val = Funcs.dartApply(unit,d);
-      next([val]);
+      next();
       return val;
     }),(jst){
       jst.meta['startTime'] = now;
@@ -1378,7 +1380,7 @@ abstract class _JazzView{
 class JazzView extends _JazzView{
   List _watches;
 
-  static void jazzIterator(Map data,Function gfn,Function afn,Function jsfn,Function donefn){
+  static void jazzIterator(Map data,Function gfn,Function afn,Function jsfn,Function donefn,[Function doneAtomFn,Function doneGroupFn]){
     Enums.eachAsync(data,(Map e,i,o,fn){
       gfn(e,e['id']);
       if(!e.containsKey('states')) return null;
@@ -1388,9 +1390,15 @@ class JazzView extends _JazzView{
           if(k is JazzAtomState) jsfn(k,h);
           return gx(null);
         },(_,vx){
+          if(doneAtomFn != null){
+            return doneAtomFn(fx);
+          }
           return fx(null);
         });
       },(_,ex){
+          if(doneGroupFn != null){
+            return doneGroupFn(fn);
+          }
         return fn(null);
       });
     },(_,err){
