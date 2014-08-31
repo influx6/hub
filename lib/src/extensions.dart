@@ -1132,13 +1132,11 @@ class Middleware{
   Future ware(Function nware(data,Function next,Function faction)){
     var comp = new Completer();
     this._mwares.add((df,nx,ed){
-      var val;
-      try{
-        val = nware(df,nx,ed);
-      }catch(e){
-        return comp.completeError(e);
-      }
-      return comp.complete(val);
+      return new Future((){
+        return nware(df,nx,ed);
+      })
+      .then(comp.complete)
+      .catchError(comp.completeError);
     });
     return comp.future;
   }
@@ -1230,18 +1228,22 @@ class JazzAtom{
 
   JazzAtom rack(String desc,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      var val = Funcs.dartApply(unit,d);
-      next();
-      return val;
+      return new Future((){
+        var val = Funcs.dartApply(unit,d);
+        next();
+        return val;
+      });
     }));
     return this;
   }
 
   JazzAtom rackAsync(String desc,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      var m = []..addAll(d)..add(() => next());
-      var val = Funcs.dartApply(unit,m);
-      return val;
+      return new Future((){
+        var m = []..addAll(d)..add(() => next());
+        var val = Funcs.dartApply(unit,m);
+        return val;
+      });
     }));
     return this;
   }
@@ -1249,9 +1251,11 @@ class JazzAtom{
   JazzAtom clock(String desc,Function unit){
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      var val = Funcs.dartApply(unit,d);
-      next();
-      return val;
+      return new Future((){
+        var val = Funcs.dartApply(unit,d);
+        next();
+        return val;
+      });
     }),(jst){
       jst.meta['startTime'] = now;
       jst.meta['endTime'] = new DateTime.now();
@@ -1263,9 +1267,11 @@ class JazzAtom{
   JazzAtom clockAsync(String desc,Function unit){
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      var m = []..addAll(d)..add(() => next());
-      var val = Funcs.dartApply(unit,m);
-      return val;
+      return new Future((){
+        var m = []..addAll(d)..add(() => next());
+        var val = Funcs.dartApply(unit,m);
+        return val;
+      });
     }),(jst){
       jst.meta['startTime'] = now;
       jst.meta['endTime'] = new DateTime.now();

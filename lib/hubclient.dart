@@ -92,12 +92,32 @@ final String styleTemplate =("""
        100% { opacity: 1; }
      }
 
+     .hidden{
+       display: none !important;
+     }
+
+    .show{
+       display: block;
+    }
+
      .blinker{
+        background: rgba(247, 250, 255, 1);
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        z-index: 3000;
+        width: 100%;
+        height: 100%;
         display: block;
-        padding: 2em 1em;
         font-size: 5em;
         font-weight: bold;
-        animation: blinkerAnimate 0.75s steps(20) infinite;
+     }
+  
+     .blinker span{
+       padding: 20%;
+       display:block;
+       font-family: Helvetica,sans,sans-serif;
+       animation: blinkerAnimate 0.75s steps(20) infinite;
      }
 
      body{
@@ -270,8 +290,8 @@ final String styleTemplate =("""
        }
 
        .tests .header .headline h1{
-         font-size: 2.0em;
-         padding: 1em .1em;
+         font-size: 1.8em;
+         padding: 1.2em .5em;
        }
 
        .tests .header .headline #runbutton{
@@ -561,15 +581,19 @@ class JStripe{
 
 final HtmlView webConsole = HtmlView.create(window.document.body);
 final JStripe stripjs = JStripe.create(window);
+final blinker = new Element.html('<div class="blinker"><span>Generating Tests...</span></div>');
 
 Function jazzUp(Function init){
+ window.document.body.append(blinker);
  var jz = Jazz.create();
  init(jz);
  webConsole.watch(jz);
  webConsole.buttonClick.onClick.listen((e){
-   webConsole.insertPoint.setInnerHtml('<div class="blinker">Generating Tests...</div>');
-   new Timer(new Duration(milliseconds:3000),(){
-     return jz.init();
+   blinker.classes.remove('hidden');
+   new Timer(new Duration(milliseconds:1000),(){
+     return jz.init().then((j){
+        blinker.classes.add('hidden');
+     });
    });
  });
  webConsole.buttonClick.dispatchEvent(new Event('click'));
