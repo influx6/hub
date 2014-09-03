@@ -1136,7 +1136,7 @@ class Middleware{
   Future ware(Function nware(data,Function next,Function faction)){
     var comp = new Completer();
     this._mwares.add((df,nx,ed){
-        return new Future((){
+        return new Future.sync((){
           return nware(df,nx,ed);
         })
         .then(comp.complete)
@@ -1232,7 +1232,7 @@ class JazzAtom{
 
   JazzAtom rack(String desc,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future((){
+      return new Future.sync((){
         var val = Funcs.dartApply(unit,d);
         next();
         return val;
@@ -1243,7 +1243,7 @@ class JazzAtom{
 
   JazzAtom rackAsync(String desc,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future((){
+      return new Future.sync((){
         var m = []..addAll(d)..add(() => next());
         var val = Funcs.dartApply(unit,m);
         return val;
@@ -1254,11 +1254,13 @@ class JazzAtom{
 
   JazzAtom tickAsync(String desc,int bits,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      var bit = 0;
-      var comp = new Completer();
-      var m = []..addAll(d)..add((){ bit += 1; if(bit >= bits) return next(); });
-      var val = Funcs.dartApply(unit,m);
-      return comp.future;
+      return new Future.sync((){
+        var bit = 0;
+        var comp = new Completer();
+        var m = []..addAll(d)..add((){ bit += 1; if(bit >= bits) return next(); });
+        var val = Funcs.dartApply(unit,m);
+        return comp.future;
+      });
     }));
     return this;
   }
@@ -1266,7 +1268,7 @@ class JazzAtom{
   JazzAtom clock(String desc,Function unit){
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future((){
+      return new Future.sync((){
         var val = Funcs.dartApply(unit,d);
         next();
         return val;
@@ -1282,7 +1284,7 @@ class JazzAtom{
   JazzAtom clockAsync(String desc,Function unit){
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future((){
+      return new Future.sync((){
         var m = []..addAll(d)..add(() => next());
         var val = Funcs.dartApply(unit,m);
         return val;
