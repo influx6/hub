@@ -100,6 +100,26 @@ final String styleTemplate =("""
        display: block;
     }
 
+    .bootError{
+        background: rgba(247, 250, 255, 1);
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        z-index: 4000;
+        width: 100%;
+        height: 100%;
+        display: block;
+        font-size: 5em;
+        font-weight: bold;
+     }
+
+    .bootError *{
+       padding: 20%;
+       display:block;
+       font-family: Helvetica,sans,sans-serif;
+       animation: blinkerAnimate 0.75s steps(20) infinite;
+     }
+
      .blinker{
         background: rgba(247, 250, 255, 1);
         position: absolute;
@@ -351,7 +371,7 @@ class HtmlView extends JazzView{
   }
 
   void process(data){
-    this.insertPoint.children.clear();
+    /*this.insertPoint.children.clear();*/
     var gset = 0,cset = 0,gbuff = [], sbuff = [],ubuff = [];
     JazzView.jazzIterator(data,(g,id){
       var gbuf = groupFragment;
@@ -414,6 +434,7 @@ class HtmlView extends JazzView{
        gbuff.clear();
        cset = gset = 0;
     },(fx){
+      if(cset > sbuff.length) cset = sbuff.length - 1;
       var atoms = ubuff.join('\n');
       var sets = sbuff[cset];
       sets = sets.replaceAll("{{atomunit_buffer}}",atoms);
@@ -422,6 +443,7 @@ class HtmlView extends JazzView{
       ubuff.clear();
       fx(null);
     },(ex){
+      if(gset > gbuff.length) gset = gbuff.length - 1;
       var asets = sbuff.join('\n');
       var gs = gbuff[gset];
       gs = gs.replaceAll("{{atomsets_buffer}}",asets);
@@ -486,6 +508,13 @@ class JStripe{
     var fragment = this.jsFragment(tag,inprop);
     if(fragment == null) return false;
     fragment[prop] = val;
+    return true;
+  }
+
+  void unset(String tag,String prop,[String inprop]){
+    var fragment = this.jsFragment(tag,inprop);
+    if(fragment == null) return false;
+    fragment.deleteProperty(prop);
     return true;
   }
 
@@ -582,17 +611,25 @@ class JStripe{
 final HtmlView webConsole = HtmlView.create(window.document.body);
 final JStripe stripjs = JStripe.create(window);
 final blinker = new Element.html('<div class="blinker"><span>Generating Tests...</span></div>');
+final error = new Element.html('<div class="bootError hidden"></div>');
 
 Function jazzUp(Function init){
  window.document.body.append(blinker);
+ window.document.body.append(error);
  var jz = Jazz.create();
  init(jz);
  webConsole.watch(jz);
  webConsole.buttonClick.onClick.listen((e){
+   webConsole.insertPoint.children.clear();
    blinker.classes.remove('hidden');
    new Timer(new Duration(milliseconds:1000),(){
      return jz.init().then((j){
         blinker.classes.add('hidden');
+        error.classes.add('hidden');
+     }).catchError((e){
+        error.setInnerText(e.toString());
+        error.classes.remove('hidden');
+        throw e;
      });
    });
  });

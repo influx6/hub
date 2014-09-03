@@ -1,8 +1,5 @@
 part of hubutils;
 
-class NullDataException extends Exception{
-  NullDataException(message): super(message);
-}
 
 class Matchers{
 
@@ -66,8 +63,8 @@ class Matchers{
     return false;
   });
 
-  static Function exists = Funcs.createMessageMatcher('exits','is a null value',(a){
-    if(Valids.exits(a)) return true;
+  static Function exists = Funcs.createMessageMatcher('exists','is a null value',(a){
+    if(Valids.exist(a)) return true;
     return false;
   });
 
@@ -76,13 +73,23 @@ class Matchers{
     return false;
   });
 
-  static Function isTruthy = Funcs.createMessageMatcher('isTruthy','is not a truth value',(a){
+  static Function isTrue = Funcs.createMessageMatcher('isTrue','is not a truth value',(a){
     if(Valids.isTrue(a)) return true;
     return false;
   });
 
-  static Function isFalsy = Funcs.createMessageMatcher('isFalsy','is not a false value',(a){
+  static Function isFalse = Funcs.createMessageMatcher('isFalse','is not a false value',(a){
     if(Valids.isFalse(a)) return true;
+    return false;
+  });
+
+  static Function isTruthy = Funcs.createMessageMatcher('isTruthy','is not a truth value',(a){
+    if(Valids.exist(a) || Valids.isTrue(a)) return true;
+    return false;
+  });
+
+  static Function isFalsy = Funcs.createMessageMatcher('isFalsy','is not a false value',(a){
+    if(Valids.notExist(a) || Valids.isFalse(a)) return true;
     return false;
   });
 
@@ -149,7 +156,9 @@ class Expects{
   static Function isBool = Funcs.compose(Expects.throwHandle,Matchers.isBool);
   static Function exists = Funcs.compose(Expects.throwHandle,Matchers.exists);
   static Function existNot = Funcs.compose(Expects.throwHandle,Matchers.existNot);
-  static Function isTruthy = Funcs.compose(Expects.throwHandle,Matchers.isTruthy);
-  static Function isFalsy = Funcs.compose(Expects.throwHandle,Matchers.isFalsy);
+  static Function truthy = Funcs.compose(Expects.throwHandle,Matchers.isTruthy);
+  static Function falsy = Funcs.compose(Expects.throwHandle,Matchers.isFalsy);
+  static Function isTrue = Funcs.compose(Expects.throwHandle,Matchers.isTrue);
+  static Function isFalse = Funcs.compose(Expects.throwHandle,Matchers.isFalse);
 
 }

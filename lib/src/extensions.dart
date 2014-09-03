@@ -1,5 +1,9 @@
 part of hubutils;
 
+class NullDataException extends Exception{
+  NullDataException(message): super(message);
+}
+
 Function _empty(t,s){}
 var _smallA = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 var _bigA = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
@@ -1132,16 +1136,16 @@ class Middleware{
   Future ware(Function nware(data,Function next,Function faction)){
     var comp = new Completer();
     this._mwares.add((df,nx,ed){
-      return new Future((){
-        return nware(df,nx,ed);
-      })
-      .then(comp.complete)
-      .catchError(comp.completeError);
+        return new Future((){
+          return nware(df,nx,ed);
+        })
+        .then(comp.complete)
+        .catchError(comp.completeError);
     });
     return comp.future;
   }
 
-  void _next(index,ndata,[bool kickout]){
+  dynamic _next(index,ndata,[bool kickout]){
     index += 1;
     kickout = Funcs.switchUnless(kickout,false);
     if(!!kickout || index >= this.size) return this._middleMan(ndata);
@@ -1155,7 +1159,7 @@ class Middleware{
     });
   }
 
-  void emit(dynamic data){
+  dynamic emit(dynamic data){
     if(this._mwares.isEmpty) return null;
     return this._next(-1,data);
   }
@@ -1169,7 +1173,7 @@ class Middleware{
 
 class JazzAtomState{
   final String id;
-  final Exception error;
+  final dynamic error;
   final Map meta;
   final bool state;
 
@@ -1180,7 +1184,7 @@ class JazzAtomState{
 class JazzAtom{
   Function _emitter;
   final String description;
-  Middlware _groupware;
+  Middleware _groupware;
   List _done;
   List _states;
   int _failCount;
@@ -1248,6 +1252,17 @@ class JazzAtom{
     return this;
   }
 
+  JazzAtom tickAsync(String desc,int bits,Function unit){
+    this._handleRack(desc,this._groupware.ware((d,next,end){
+      var bit = 0;
+      var comp = new Completer();
+      var m = []..addAll(d)..add((){ bit += 1; if(bit >= bits) return next(); });
+      var val = Funcs.dartApply(unit,m);
+      return comp.future;
+    }));
+    return this;
+  }
+
   JazzAtom clock(String desc,Function unit){
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
@@ -1280,7 +1295,7 @@ class JazzAtom{
     return this;
   }
 
-  Future get emit => this._emitter;
+  Function<Future> get emit => this._emitter;
   
 }
 
@@ -1496,7 +1511,7 @@ class ConsoleView extends JazzView{
 }
 
 final ConsoleView jazzConsole = ConsoleView.create();
-Function jazzUp(Function init){
+Future jazzUp(Function init){
  var jz = Jazz.create();
  jazzConsole.watch(jz);
  init(jz);

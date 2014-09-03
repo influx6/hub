@@ -2,6 +2,7 @@ part of hubutils;
 
 class Funcs{
 
+  static bool not(bool m){ return !m; }
   static Function emptyFunction(){}
   static Function emptySingleFunction([a]){}
   static Function emptyDualFunction([a,b]){}
@@ -344,14 +345,16 @@ class Funcs{
   
   
   static Function createMessageMatcher(String name,String failmessage,dynamic n,[int i]){
-    return Funcs.compose((bool m){ 
-      if(!!m) return true;
-      return {
-        "name": name,
-        "state": "Failed!",
-        "message": failmessage
-      };   
-    },n,i);
+    return Funcs.composeList((Map m){ 
+      if(!!m['result']) return true;
+      m['name'] = name;
+      m['state'] = "Failed!";
+      m['message'] = failmessage;
+      return m;
+    },(List vals){
+      var res = Funcs.dartApply(n,vals);
+      return { 'result':res,'args':vals };
+    },i);
   }
   
   //returns a future with a map of error messages if any
@@ -596,6 +599,12 @@ class Funcs{
     };
   }
   
+  static Function alwaysFn(n){
+    return ([f]){
+      return n();
+    };
+  }
+
   static Function applyUnless(Function m){
    return (g){
        return (m(g) || g);
