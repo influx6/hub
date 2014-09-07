@@ -31,7 +31,14 @@ void main(){
 
     });
 
-  });
+    _.group('testing expects runs',(g){
+    
+      g.test('can i use expects')
+      .rack('check asserts',(d){
+        Expects.asserts(d,3);
+      }).emit(2);
 
+    });
+  });
 
 }

@@ -3,7 +3,7 @@ part of hubutils;
 
 class Matchers{
 
-  static Function asserts = Funcs.createMessageMatcher('asserts','values dont match!',(bool a,bool b){
+  static Function asserts = Funcs.createMessageMatcher('asserts','values dont match!',(a,b){
     if(Valids.match(a,b)) return true;
     return false;
    },2);

@@ -1134,13 +1134,19 @@ class Middleware{
   }
 
   Future ware(Function nware(data,Function next,Function faction)){
-    var comp = new Completer();
+    var n =0,comp = new Completer();
     this._mwares.add((df,nx,ed){
         return new Future.sync((){
           return nware(df,nx,ed);
         })
-        .then(comp.complete)
-        .catchError(comp.completeError);
+        .then((f){
+          if(!comp.isCompleted)
+            return comp.complete(f);
+        })
+        .catchError((f){
+          if(!comp.isCompleted)
+            return comp.completeError(f);
+        });
     });
     return comp.future;
   }
@@ -1307,6 +1313,7 @@ class JazzGroups{
   MapDecorator atomStates;
   List _doneAtoms;
   int failCount,passedCount,total;
+  Completer _whenDone;
 
   static JazzGroups create(String d,[Function n]){
     var jz = new JazzGroups(d);
@@ -1315,6 +1322,7 @@ class JazzGroups{
   }
 
   JazzGroups(this.description){
+    this._whenDone = new Completer();
     this.failCount = 0;
     this.passedCount = 0;
     this.total = 0;
@@ -1340,7 +1348,10 @@ class JazzGroups{
   }
 
   Future init(){
+    this._whenDone = new Completer();
     var wait = Future.wait(this._doneAtoms);
+    wait.then((f) => this._whenDone.complete(null))
+      .catchError((e) => this._whenDone.complete(null));
     return wait.then((f){
       return { 
         'id':this.description, 
@@ -1351,6 +1362,8 @@ class JazzGroups{
       };
     });
   }
+
+  Future get done => this._whenDone.future;
 }
 
 
@@ -1403,7 +1416,7 @@ abstract class _JazzView{
 class JazzView extends _JazzView{
   List _watches;
 
-  static void jazzIterator(Map data,Function gfn,Function afn,Function jsfn,Function donefn,[Function doneAtomFn,Function doneGroupFn]){
+  static void jazzIterator(List data,Function gfn,Function afn,Function jsfn,Function donefn,[Function doneAtomFn,Function doneGroupFn]){
     Enums.eachAsync(data,(Map e,i,o,fn){
       gfn(e,e['id']);
       if(!e.containsKey('states')) return null;
