@@ -608,6 +608,472 @@ class JStripe{
   }
 }
 
+class DisplayHook{
+	TaskQueue tasks;
+	Window w;
+	Switch alive;
+	List<Timers> _repeaters;
+	int _frameid;
+
+	static create(w) => new DisplayHook(w);
+
+	DisplayHook(this.w){
+          this._repeaters = new List<Timers>();
+          this.tasks = TaskQueue.create(false);
+          this.alive = Switch.create();
+          this.tasks.immediate(this._scheduleDistributors);
+	}
+
+	int get id => this._frameid;
+	
+	void schedule(Function m(int ms)) => this.tasks.queue(m);
+	void scheduleDelay(int msq,Function m(int ms)) => this.tasks.queueAfter(msq,m);
+	void scheduleImmediate(Function m(int ms)) => this.tasks.immediate(m);
+	Timer scheduleEvery(int msq,Function m){
+		var t = this.tasks.queueEvery(msq,m);
+		this._repeaters.add(t);
+		return t;
+	}
+
+	void _scheduleDistributors([n]){
+		this.tasks.queue(this._scheduleDistributors);
+	}
+
+	void emit([int n]){
+		this.tasks.exec(n);
+		this.run();
+	}
+
+	void run(){
+          if(this.alive.on()) return null;
+          this._frameid = this.w.requestAnimationFrame((i) => this.emit(i));
+          this.alive.switchOn();
+	}
+
+	void stop(){
+          if(!this.alive.on()) return null;
+          this.alive.switchOff();
+          this.w.cancelAnimationFrame(this._frameid);
+          this._repeaters.forEach((f) => f.cancel());
+          this.tasks.clearJobs();
+	}
+
+	String toString() => "DisplayHook with ${this._frameid}";
+
+        void destroy(){
+          this.repeaters.clear();
+          this.tasks.destroy();
+          this.alive.close();
+          this.w = null;
+        }
+
+}
+
+abstract class EventContract{
+  void bind(String name,Function n);
+  void bindOnce(String name,Function n);
+  void unbind(String name,Function n);
+  void unbindOnce(String name,Function n);
+}
+
+class QueryShell{
+    Element root;
+    QueryShell _ps;
+    
+    static create(d) => new QueryShell(d);
+    QueryShell(this.root);
+
+    Element get parent => this.root.parentNode;
+
+    QueryShell get p{
+      if(Valids.exist(this._ps)) return this._ps;
+      if(Valids.notExist(this.parent)) return null;
+      this._ps = QueryShell.create(this.parent);
+      return this._ps;
+    }
+
+    bool matchSelector(String selector) => this.root.matches(selector);
+
+    dynamic css(dynamic a){
+      if(Valids.isList(a)) return QueryUtil.getCSS(this.root,a);
+      if(Valids.isMap(a)) return QueryUtil.cssElem(this.root,a);
+      return null;
+    }
+    
+    bool matchAttr(String n,dyanmic v){
+      if(!this.hasAttr(n)) return false;
+      return Valids.match(this.attr(n),v);
+    }
+
+    bool matchData(String n,dyanmic v){
+      if(!this.hasData(n)) return false;
+      return Valids.match(this.data(n),v);
+    }
+
+    bool hasAttr(String n) => this.root.attributes.containsKey(n);
+    bool hasData(String n) => this.root.dataset.containsKey(n);
+    
+    dynamic attr(String n,[dynamic val,Function fn]){
+      var dv = this.root.getAttribute(n);
+      if(Valids.exist(fn)) fn(dv);
+      if(Valids.notExist(val)) return dv;
+      return this.root.attributes[n] = val.toString();
+    }
+
+    dynamic data(String n,[dynamic val,Function fn]){
+      var dv = this.root.dataset[n];
+      if(Valids.exist(fn)) fn(dv);
+      if(Valids.notExist(val)) return dv;
+      return this.root.dataset[n] = val.toString();
+    }
+
+    dynamic query(n,[v]) => QueryUtil.queryElem(this.root,n,v);
+    dynamic queryAll(n,[v]) => QueryUtil.queryAllElem(this.root,n,v);
+
+    dynamic get style => this.root.getComputedStyle();
+
+    dynamic createElement(String n,[String content]){
+        var elem = QueryUtil.createElement(n);
+        if(Valids.exist(content)) elem.setInnerHtml(content);
+        QueryUtil.defaultValidator.addTag(elem.tagName);
+        this.root.append(elem);
+        return elem;
+    }
+
+    dynamic createHtml(String markup){
+        var elem = QueryUtil.createHtml(markup);
+        QueryUtil.defaultValidator.addTag(elem.tagName);
+        this.root.append(elem);
+        return elem;
+    }
+
+    dynamic toHtml() => QueryUtil.liquify(this.root);
+    void useHtml(html.Element l) => QueryUtil.deliquify(l,this.root);
+
+    void dispatchEvent(String d,[v]) => QueryUtil.dispatch(this.root,d,v);
+
+    void queryMessage(String sel,String type,d) => this.deliverMessage(sel,type,d,this.root);
+    void queryMassMessage(String sel,String type,d) => this.deliverMassMessage(sel,type,d,this.root);
+
+}
+
+class CustomValidator{
+  NodeValidatorBuilder _validator;
+
+  CustomValidator(){
+    this._validator = new NodeValidatorBuilder();
+    this.rules.allowSvg();
+    this.rules.allowHtml5();
+    this.rules.allowInlineStyles();
+    this.rules.allowTextElements();
+    this.rules.allowTemplating();
+    this.rules.allowElement('script',attributes:['id','data','rel']);
+    this.rules.allowElement('link',attributes:['id','data','rel']);
+    this.rules.allowElement('script',attributes:['id','data','rel']);
+  }
+
+  void addTag(String n){
+          this.rules.allowElement(n.toLowerCase());
+  }
+
+  dynamic get rules => this._validator;
+}
+
+class QueryUtil{
+
+    static RegExp digitReg = new RegExp(r'\d');
+    static RegExp wordReg = new RegExp(r'\w');
+    static CustomValidator defaultValidator = new CustomValidator();
+    static num fromPx(String px){
+      return num.parse(px
+          .replaceAll('px','')
+          .replaceAll('%','')
+          .replaceAll('em','')
+          .replaceAll('vrem','')
+          .replaceAll('rem',''));
+    }
+    static String toPx(num px) => "${px}px";
+    static String toPercent(num px) => "${px}%";
+    static String toRem(num px) => "${px}rem";
+    static String toEm(num px) => "${px}em";
+
+    static void deliverMessage(String sel,String type,dynamic r,[Document n]){
+      n = Funcs.switchUnless(n,window.document);
+      QueryUtil.queryElem(n,sel,(d){
+        QueryUtil.dispatchEvent(type,d,r);
+      });
+    }
+
+    static void deliverMassMessage(String sel,String type,dynamic r,[Document n]){
+      n = Funcs.switchUnless(n,window.document);
+      QueryUtil.queryAllElem(n,sel,(d){
+        d.forEach((v){
+          QueryUtil.dispatchEvent(type,v,r);
+        });
+      });
+    }
+
+    static void dispatchEvent(Element t,String n,[dynamic d]){
+      return t.dispatchEvent(new CustomEvent(n,detail:d));
+    }
+
+    static dynamic getCSS(Element n,List a){
+      var res = {};
+      attr.forEach((f){
+         res[f] = n.style.getProperty(f);
+      });
+      return MapDecorator.create(res);
+    }
+    
+    static dynamic queryElem(Element d,String query,[Function v]){
+      var q = d.querySelector(query);
+      if(Valids.exist(q) && Valids.exist(v)) v(q);
+      return q;
+    }
+
+    static dynamic queryAllElem(Element d,String query,[Function v]){
+      var q = d.querySelectorAll(query);
+      if(Valids.exist(q) && Valids.exist(v)) v(q);
+      return q;
+    }
+
+    static void cssElem(Element n,Map m){
+      m.forEach((k,v){
+          var val = v;
+          if(Valids.isNumber(v)) val = QueryUtil.toPx(v);
+          n.style.setProperty(k,val);
+      });
+    }
+
+    static Element createElement(String n){
+      QueryUtil.defaultValidator.addTag(n);
+      return window.document.createElement(n);
+    }
+
+    static Element createString n){
+      return new Element.n,validator: QueryUtil.defaultValidator.rules);
+    }
+
+    static Element liquify(Element n){
+      var b = QueryUtil.createElement(n.tagName.toLowerCase());
+      b.setInnern.innervalidator: QueryUtil.defaultValidator.rules);
+      return b;
+    }
+
+    static void deliquify(Element l,Element hold){
+      hold.setInnerl.innervalidator: QueryUtil.defaultValidator.rules);
+    }
+
+}
+
+class EventsFactory{
+	MapDecorator _hidden,factories;
+	MapDecorator bindings;
+	EventContract handler;
+
+	static create(n) => new EventsFactory(n);
+
+	EventsFactory(this.handler){
+		this._hidden = MapDecorator.create();
+		this.factories = MapDecorator.create();
+		this.bindings = MapDecorator.create();
+	}
+
+	void addFactory(String name,Function n(e)){
+		this._hidden.add(name,n);
+		this.factories.add(name,(n){
+			this._hidden.get(name)(n);
+		});
+	}
+
+	Function updateFactory(String name,Function n(e)){
+		this._hidden.update(name,n);
+	}
+
+	void removeFactory(String name){
+		this._hidden.destroy(name);
+		this.factories.destroy(name);
+	}
+
+	Function getFactory(String name) => this.factories.get(name);
+
+	bool hasFactory(String name) => this.factories.has(name);
+
+	void fireFactory(String name,[dynamic n]) => this.hasFactory(name) && this.getFactory(name)(n);
+
+	void bindFactory(String name,String ft){
+		if(!this.factories.has(ft)) return null;
+                /*if(this.bindings.has(name) && this.bindings.get(name).contains(ft)) return null;*/
+		(this.bindings.has(name) ? this.bindings.get(name).add(ft) : this.bindings.add(name,[ft]));
+		this.handler.bind(name,this.factories.get(ft));
+	}
+
+	void bindFactoryOnce(String name,String ft){
+		if(!this.factories.has(ft)) return null;
+		// (this.bindings.has(name) ? this.bindings.get(name).add(ft) : this.bindings.add(name,[ft]));
+		this.handler.bindOnce(name,this.factories.get(ft));
+	}
+
+	void unbindFactory(String name,String ft){
+		if(!this.factories.has(ft)) return null;
+		(this.bindings.has(name) ? this.bindings.get(name).removeElement(this.factories.get(ft)) : null);
+		this.handler.unbind(name,this.factories.get(ft));
+	}
+
+	void unbindFactoryOnce(String name,String ft){
+		if(!this.factories.has(ft)) return null;
+		this.handler.unbindOnce(name,this.factories.get(ft));
+	}
+
+	void unbindAllFactories(){
+		this.bindings.onAll((name,list){
+			list.forEach((f) => this.unbindFactory(name,f));
+		});
+	}
+
+	void destroy(){
+		this.unbindAllFactories();
+		this._hidden.clear();
+		this.factories.clear();
+		this.handler = this._hidden = this.factories = null;
+	}
+}
+
+class ElementBindings{
+	final hooks = MapDecorator.create();
+	final List<html.Element> _hiddenElements;
+	bool _supportHiddenElement = false;
+	html.Element element;
+
+	static create() => new ElementBindings();
+
+	ElementBinding();
+
+	void enableMutipleElements() => this._supportHiddenElement = true;
+	void disabeMultipleElements() => this._supportHiddenElement = false;
+	bool get supportMultiple => !!this._supportHiddenElement;
+
+	void destroy(){
+		this.unHookAll();
+		this.hooks.onAll((n,k) => k.free());
+		this.hooks.clear();
+		this.element = null;
+	}
+
+	void _bindHidden(html.Element e){
+		if(this._hiddenElements.contains(e)) return null;
+		this._hiddenElements.add(e);
+		this.hooks.onAll((k,v){
+			this.addHook(k,null,e);
+		});
+	}
+
+	void _unbindAllHidden(){
+		this._hiddenElements.forEach((f){
+			this.hooks.onAll((k,v){
+				this.removeHook(k,f);
+			});
+		});
+	}
+
+	void _rebindAllHidden(){
+		this._hiddenElements.forEach((f){
+			this.hooks.onAll((k,v){
+				this.addHook(k,null,f);
+			});
+		});
+	}
+
+	void bindTo(html.Element e){
+		if(this.supportMultiple) return this._bindHidden(e);
+		this.unHookAll();
+		this.element = e;
+		this.rebindAll();
+	}
+
+	void rebindAll(){
+		if(this.supportMultiple) return this._rebindAllHidden();
+		this.hooks.onAll((k,v){
+			this.addHook(k);
+		});
+	}
+
+	void unHookAll(){
+		if(this.supportMultiple) return this._unbindAllHidden();
+		this.hooks.onAll((k,v){
+			this.removeHook(k);
+		});
+	}
+
+	dynamic getHooks(String name) => this.hooks.get(name);
+
+	void addHook(String name,[Function n,html.Element hidden]){
+		var ds, elem = Valids.exist(hidden) ? hidden : this.element;
+		if(this.hooks.has(name)){
+			ds = this.getHooks(name);
+		}else{
+			ds = Hub.createDistributor('$name-hook');
+			this.hooks.add(name,ds);
+		}
+
+		if(Valids.exist(n)) ds.on(n);
+		if(Valids.exist(elem)) 
+			elem.addEventListener(name,ds.emit,false);
+	}
+
+	void removeHook(String name,[html.Element e]){
+		if(!this.hooks.has(name)) return null;
+
+		var ds = this.hooks.get(name), elem = Valids.exist(e) ? e : this.element;
+
+		if(Valids.exist(elem)) 
+			elem.removeEventListener(name,ds.emit,false);
+	}
+
+	void fireHook(String name,dynamic n){
+		if(!this.hooks.has(name)) return null;
+
+		var e = (n is html.CustomEvent ? (n.eventPhase < 2 ? n : 
+			new html.CustomEvent(name,detail: n.detail)) 
+			: new html.CustomEvent(name,detail: n));
+
+		if(Valids.notExist(this.element)) return this.hooks.get(name).emit(e);
+		return this.element.dispatchEvent(e);
+	}
+
+	void bind(String name,Function n){
+		if(!this.hooks.has(name)) return null;
+		return this.hooks.get(name).on(n);
+	}
+
+	void bindWhenDone(String name,Function n){
+		if(!this.hooks.has(name)) return null;
+		return this.hooks.get(name).whenDone(n);
+	}
+
+	void unbindWhenDone(String name,Function n){
+		if(!this.hooks.has(name)) return null;
+		return this.hooks.get(name).offWhenDone(n);
+	}
+
+	void bindOnce(String name,Function n){
+		if(!this.hooks.has(name)) return null;
+		return this.hooks.get(name).once(n);
+	}
+
+	void unbind(String name,Function n){
+		if(!this.hooks.has(name)) return null;
+		return this.hooks.get(name).off(n);
+	}
+
+	void unbindOnce(String name,Function n){
+		if(!this.hooks.has(name)) return null;
+		return this.hooks.get(name).offOnce(n);
+	}
+
+	String toString() => this.hooks.toString();
+}
+
 final HtmlView webConsole = HtmlView.create(window.document.body);
 final JStripe stripjs = JStripe.create(window);
 final blinker = new Element.html('<div class="blinker"><span>Generating Tests...</span></div>');

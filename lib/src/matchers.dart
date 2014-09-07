@@ -84,12 +84,12 @@ class Matchers{
   });
 
   static Function isTruthy = Funcs.createMessageMatcher('isTruthy','is not a truth value',(a){
-    if(Valids.exist(a) || Valids.isTrue(a)) return true;
+    if(Valids.truthy(a)) return true;
     return false;
   });
 
   static Function isFalsy = Funcs.createMessageMatcher('isFalsy','is not a false value',(a){
-    if(Valids.notExist(a) || Valids.isFalse(a)) return true;
+    if(Valids.falsy(a)) return true;
     return false;
   });
 

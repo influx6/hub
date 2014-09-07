@@ -33,6 +33,13 @@ class Valids{
   static bool isOdd(int n) => n % 2 != 0;
   static bool isEven(int n) => n % 2 == 0;
 
+  static bool truthy(a){
+    if(Valids.exist(a) || Valids.isTrue(a)) return true;
+    return false;
+  }
+
+  static bool falsy(a) => Valids.not(Valids.truthy(a));
+
   static Function lessThan(x,m) => x < m;
   static Function lessThanEqual(x,m) => x <= m;
 
