@@ -748,7 +748,7 @@ class QueryShell{
     }
 
     dynamic toHtml() => QueryUtil.liquify(this.root);
-    void useHtml(html.Element l) => QueryUtil.deliquify(l,this.root);
+    void useHtml(Element l) => QueryUtil.deliquify(l,this.root);
 
     void dispatchEvent(String d,[v]) => QueryUtil.dispatch(this.root,d,v);
 
@@ -850,18 +850,18 @@ class QueryUtil{
       return window.document.createElement(n);
     }
 
-    static Element createString n){
-      return new Element.n,validator: QueryUtil.defaultValidator.rules);
+    static Element createHtml(String n){
+      return new Element.setInnerHtml(n,validator: QueryUtil.defaultValidator.rules);
     }
 
     static Element liquify(Element n){
       var b = QueryUtil.createElement(n.tagName.toLowerCase());
-      b.setInnern.innervalidator: QueryUtil.defaultValidator.rules);
+      b.setInnerHtml(n.innerHtml,validator: QueryUtil.defaultValidator.rules);
       return b;
     }
 
     static void deliquify(Element l,Element hold){
-      hold.setInnerl.innervalidator: QueryUtil.defaultValidator.rules);
+      hold.setInnerHtml(l.innerHtml,validator: QueryUtil.defaultValidator.rules);
     }
 
 }
@@ -941,9 +941,9 @@ class EventsFactory{
 
 class ElementBindings{
 	final hooks = MapDecorator.create();
-	final List<html.Element> _hiddenElements;
+	final List<Element> _hiddenElements;
 	bool _supportHiddenElement = false;
-	html.Element element;
+	Element element;
 
 	static create() => new ElementBindings();
 
@@ -960,7 +960,7 @@ class ElementBindings{
 		this.element = null;
 	}
 
-	void _bindHidden(html.Element e){
+	void _bindHidden(Element e){
 		if(this._hiddenElements.contains(e)) return null;
 		this._hiddenElements.add(e);
 		this.hooks.onAll((k,v){
@@ -984,7 +984,7 @@ class ElementBindings{
 		});
 	}
 
-	void bindTo(html.Element e){
+	void bindTo(Element e){
 		if(this.supportMultiple) return this._bindHidden(e);
 		this.unHookAll();
 		this.element = e;
@@ -1007,7 +1007,7 @@ class ElementBindings{
 
 	dynamic getHooks(String name) => this.hooks.get(name);
 
-	void addHook(String name,[Function n,html.Element hidden]){
+	void addHook(String name,[Function n,Element hidden]){
 		var ds, elem = Valids.exist(hidden) ? hidden : this.element;
 		if(this.hooks.has(name)){
 			ds = this.getHooks(name);
@@ -1021,7 +1021,7 @@ class ElementBindings{
 			elem.addEventListener(name,ds.emit,false);
 	}
 
-	void removeHook(String name,[html.Element e]){
+	void removeHook(String name,[Element e]){
 		if(!this.hooks.has(name)) return null;
 
 		var ds = this.hooks.get(name), elem = Valids.exist(e) ? e : this.element;
@@ -1033,9 +1033,9 @@ class ElementBindings{
 	void fireHook(String name,dynamic n){
 		if(!this.hooks.has(name)) return null;
 
-		var e = (n is html.CustomEvent ? (n.eventPhase < 2 ? n : 
-			new html.CustomEvent(name,detail: n.detail)) 
-			: new html.CustomEvent(name,detail: n));
+		var e = (n is CustomEvent ? (n.eventPhase < 2 ? n : 
+			new CustomEvent(name,detail: n.detail)) 
+			: new CustomEvent(name,detail: n));
 
 		if(Valids.notExist(this.element)) return this.hooks.get(name).emit(e);
 		return this.element.dispatchEvent(e);
