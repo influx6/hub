@@ -1131,6 +1131,7 @@ class Middleware{
   Middleware([Function midMan(n)]){
     this._middleMan = Valids.exist(midMan) ? midMan : (n){};
     this._mwares = new List();
+    this.ware((d,next,end){ next(); });
   }
 
   Future ware(Function nware(data,Function next,Function faction)){
