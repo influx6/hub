@@ -155,6 +155,7 @@ class Expects{
   static Function isDate = Funcs.compose(Expects.throwHandle,Matchers.isDate);
   static Function isBool = Funcs.compose(Expects.throwHandle,Matchers.isBool);
   static Function exists = Funcs.compose(Expects.throwHandle,Matchers.exists);
+  static Function exist = Funcs.compose(Expects.throwHandle,Matchers.exists);
   static Function existNot = Funcs.compose(Expects.throwHandle,Matchers.existNot);
   static Function truthy = Funcs.compose(Expects.throwHandle,Matchers.isTruthy);
   static Function falsy = Funcs.compose(Expects.throwHandle,Matchers.isFalsy);

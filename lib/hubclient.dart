@@ -677,13 +677,22 @@ abstract class EventContract{
 }
 
 class QueryShell{
+    Switch _active;
     Element root;
     QueryShell _ps;
     
     static create(d) => new QueryShell(d);
-    QueryShell(this.root);
+    QueryShell(this.root){
+      this._active = Switch.create();
+      this._active.switchOn();
+    }
 
-    Element get parent => this.root.parentNode;
+    bool get isActive => this._active.on();
+
+    Element get parent{
+      if(!this.isActive) return null;
+      return this.root.parentNode;
+    }
 
     QueryShell get p{
       if(Valids.exist(this._ps)) return this._ps;
@@ -692,28 +701,42 @@ class QueryShell{
       return this._ps;
     }
 
-    bool matchSelector(String selector) => this.root.matches(selector);
+    bool matchSelector(String selector){
+      if(!this.isActive) return false;
+      this.root.matches(selector);
+    }
 
     dynamic css(dynamic a){
+      if(!this.isActive) return null;
       if(Valids.isList(a)) return QueryUtil.getCSS(this.root,a);
       if(Valids.isMap(a)) return QueryUtil.cssElem(this.root,a);
       return null;
     }
     
     bool matchAttr(String n,dyanmic v){
+      if(!this.isActive) return false;
       if(!this.hasAttr(n)) return false;
       return Valids.match(this.attr(n),v);
     }
 
     bool matchData(String n,dyanmic v){
+      if(!this.isActive) return false;
       if(!this.hasData(n)) return false;
       return Valids.match(this.data(n),v);
     }
 
-    bool hasAttr(String n) => this.root.attributes.containsKey(n);
-    bool hasData(String n) => this.root.dataset.containsKey(n);
+    bool hasAttr(String n){
+      if(!this.isActive) return false;
+      return this.root.attributes.containsKey(n);
+    }
+
+    bool hasData(String n){
+      if(!this.isActive) return false;
+      return this.root.dataset.containsKey(n);
+    }
     
     dynamic attr(String n,[dynamic val,Function fn]){
+      if(!this.isActive) return null;
       var dv = this.root.getAttribute(n);
       if(Valids.exist(fn)) fn(dv);
       if(Valids.notExist(val)) return dv;
@@ -721,18 +744,30 @@ class QueryShell{
     }
 
     dynamic data(String n,[dynamic val,Function fn]){
+      if(!this.isActive) return null;
       var dv = this.root.dataset[n];
       if(Valids.exist(fn)) fn(dv);
       if(Valids.notExist(val)) return dv;
       return this.root.dataset[n] = val.toString();
     }
 
-    dynamic query(n,[v]) => QueryUtil.queryElem(this.root,n,v);
-    dynamic queryAll(n,[v]) => QueryUtil.queryAllElem(this.root,n,v);
+    dynamic query(n,[v]){
+      if(!this.isActive) return null;
+      return QueryUtil.queryElem(this.root,n,v);
+    }
 
-    dynamic get style => this.root.getComputedStyle();
+    dynamic queryAll(n,[v]){
+      if(!this.isActive) return null;
+      return QueryUtil.queryAllElem(this.root,n,v);
+    }
+
+    dynamic get style{
+      if(!this.isActive) return null;
+      return this.root.getComputedStyle();
+    }
 
     dynamic createElement(String n,[String content]){
+      if(!this.isActive) return null;
         var elem = QueryUtil.createElement(n);
         if(Valids.exist(content)) elem.setInnerHtml(content);
         QueryUtil.defaultValidator.addTag(elem.tagName);
@@ -741,19 +776,43 @@ class QueryShell{
     }
 
     dynamic createHtml(String markup){
+      if(!this.isActive) return null;
         var elem = QueryUtil.createHtml(markup);
         QueryUtil.defaultValidator.addTag(elem.tagName);
         this.root.append(elem);
         return elem;
     }
 
-    dynamic toHtml() => QueryUtil.liquify(this.root);
-    void useHtml(Element l) => QueryUtil.deliquify(l,this.root);
+    dynamic toHtml(){
+      if(!this.isActive) return null;
+      return QueryUtil.liquify(this.root);
+    }
 
-    void dispatchEvent(String d,[v]) => QueryUtil.dispatch(this.root,d,v);
+    void useHtml(Element l){
+      if(!this.isActive) return null;
+      return QueryUtil.deliquify(l,this.root);
+    }
 
-    void queryMessage(String sel,String type,d) => this.deliverMessage(sel,type,d,this.root);
-    void queryMassMessage(String sel,String type,d) => this.deliverMassMessage(sel,type,d,this.root);
+    void dispatchEvent(String d,[v]){
+      if(!this.isActive) return null;
+      return QueryUtil.dispatch(this.root,d,v);
+    }
+
+    void queryMessage(String sel,String type,d){
+      if(!this.isActive) return null;
+      return this.deliverMessage(sel,type,d,this.root);
+    }
+
+    void queryMassMessage(String sel,String type,d){
+      if(!this.isActive) return null;
+      return this.deliverMassMessage(sel,type,d,this.root);
+    }
+
+    void destroy(){
+      if(!this.isActive) return null;
+      this.root = null;
+      this._active.switchOff();
+    }
 
 }
 
@@ -915,9 +974,13 @@ class EventsFactory{
 	}
 
 	void unbindFactory(String name,String ft){
-		if(!this.factories.has(ft)) return null;
-		(this.bindings.has(name) ? this.bindings.get(name).removeElement(this.factories.get(ft)) : null);
-		this.handler.unbind(name,this.factories.get(ft));
+          if(!this.factories.has(ft)) return null;
+          if(this.bindings.has(name)){
+           var id = this.bindings.get(name);
+           id.remove(this.factories.get(ft));
+           return null;
+          }
+          this.handler.unbind(name,this.factories.get(ft));
 	}
 
 	void unbindFactoryOnce(String name,String ft){
@@ -926,9 +989,9 @@ class EventsFactory{
 	}
 
 	void unbindAllFactories(){
-		this.bindings.onAll((name,list){
-			list.forEach((f) => this.unbindFactory(name,f));
-		});
+            this.bindings.onAll((name,list){
+                list.forEach((f) => this.unbindFactory(name,f));
+            });
 	}
 
 	void destroy(){

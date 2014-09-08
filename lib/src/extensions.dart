@@ -4,6 +4,144 @@ class NullDataException extends Exception{
   NullDataException(message): super(message);
 }
 
+class DualBind{
+  Function fn,gn,unbindfn;
+
+  static create(ubn,[fn,gn]) => new DualBind(ubn,fn,gn);
+
+  DualBind(this.unbindfn,[this.fn,this.gn]);
+
+  Function first([m]){
+    if(Valids.exist(this.fn)) return this.fn(m);
+  }
+
+  Function second([m]){
+    if(Valids.exist(this.gn)) return this.gn(m);
+  }
+
+  Function unbind(){
+    this.unbindfn(this);
+    this.fn = this.gn = null;
+  }
+}
+
+abstract class MutexLock{
+  dynamic get locked;
+  dynamic get unlocked;
+  bool get owns;
+  void lock();
+  void unlock();
+  void owned();
+  void disowned();
+}
+
+class MutexSafeLock extends MutexLock{
+  MutexLockd _lock;
+
+  static create(n) => new MutexSafeLock(n);
+  MutexSafeLock(this._lock);
+
+  dynamic get locked => this._lock.locked;
+  dynamic get unlocked => this._lock.unlocked;
+  bool get owns => this._lock.owns;
+
+  void lock(){}
+  void unlock(){}
+  void owned(){}
+  void disowned(){}
+}
+
+class MutexLockd extends MutexLock{
+  final Distributor locked = Distributor.create('mutex-locked-emit');
+  final Distributor unlocked = Distributor.create('mutex-unlocked-emit');
+  Locker _lock;
+  bool _owns = false;
+
+  static create(n) => new MutexLockd(n);
+
+  MutexLockd(this._lock);
+
+  MutexLock get safe => MutexSafeLock.create(this);
+
+  bool get isActive => this._lock != null;
+  bool get owns => !!this._owns;
+
+  void lock(){
+    if(!this.isActive) return null;
+    this._lock.lock(this);
+  }
+
+  void unlock(){
+    if(!this.isActive) return null;
+    this._lock.unlock(this);
+  }
+
+  void owned(){
+    if(!this.isActive) return null;
+    this.locked.emit(true);
+    this._owns = true;
+  }
+
+  void disowned(){
+    if(!this.isActive) return null;
+    this.unlocked.emit(true);
+    this._owns = false;
+  }
+}
+
+class Locker{
+  bool _holdLock = false;
+  List _locks = new List<MutexLock>();
+  MutexLocks _cur;
+
+  static create() => new Locker();
+
+  Locker();
+
+  void disableSingular(){
+    this._holdLock = false;
+  }
+
+  void enableSingular(){
+    this._holdLock = true;
+  }
+
+  bool get singularLock => !!this._holdLock;
+  bool get unlockable => !!this.singularLock && this._cur != null;
+
+  MutexLock createLock(){
+    var lk = MutexLockd.create(this);
+    this._locks.add(lk);
+    return lk;
+  }
+
+  void lock(MutexLock lock){
+    if(this.unlockable) return null;
+    if(this._locks.indexOf(lock) == -1) return null;
+    if(this._cur == lock) return null;
+    this._cur = lock;
+    lock.owned();
+    this.unlockAll([lock]);
+  }
+
+  void unlock(MutexLock lock){
+    if(this._locks.indexOf(lock) == -1) return null;
+    if(this._cur != lock) return null;
+    this._cur.disowned();
+    this._cur = null;
+  }
+
+  void unlockAll([List exs]){
+    if(!this.singularLock) this._cur = null;
+    this._locks.forEach((f){
+      if(Valids.exist(exs)){
+        if(exs.indexOf(f) != -1) return null;
+      }
+      f.disowned();
+    });
+  }
+}
+
 Function _empty(t,s){}
 var _smallA = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 var _bigA = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
@@ -1206,9 +1344,9 @@ class JazzAtom{
 
     var finalizer = (n){
         var ls = [{
-          'total': this._groupware.size,
+          'total': this._groupware.size - 1,
           'fail': this._failCount, 
-          'passed': this._groupware.size - this._failCount
+          'passed': (this._groupware.size - 1) - this._failCount
         }]..addAll(this._states);
         this._states.clear();
         return ls;
