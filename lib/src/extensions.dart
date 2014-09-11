@@ -2,7 +2,7 @@ part of hubutils;
 
 class BasicException extends Exception{
   static create(m) => new BasicException(m);
-  BasicException(String message): super(messages);
+  BasicException(String message): super(message);
 }
 
 class ConnectionException extends Exception{
