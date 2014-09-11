@@ -1,13 +1,20 @@
 part of hubutils;
 
-class BasicException extends Exception{
-  static create(m) => new BasicException(m);
-  BasicException(String message): super(message);
+class NullDataException implements Exception{
+  final message;
+  NullDataException(message);
 }
 
-class ConnectionException extends Exception{
+class BasicException implements Exception{
+  final message;
+  static create(m) => new BasicException(m);
+  BasicException(String message);
+}
+
+class ConnectionException implements Exception{
+  final message;
   static create(m) => new ConnectionException(m);
-  ConnectionException(String message): super(messages);
+  ConnectionException(String message);
 }
 
 class ConnectionNotOpened extends ConnectionException{
@@ -36,9 +43,6 @@ class ConnectionErrored extends ConnectionException{
   }
 }
 
-class NullDataException extends Exception{
-  NullDataException(message): super(message);
-}
 
 class DualBind{
   Function fn,gn,unbindfn;
