@@ -1,5 +1,41 @@
 part of hubutils;
 
+class BasicException extends Exception{
+  static create(m) => new BasicException(m);
+  BasicException(String message): super(messages);
+}
+
+class ConnectionException extends Exception{
+  static create(m) => new ConnectionException(m);
+  ConnectionException(String message): super(messages);
+}
+
+class ConnectionNotOpened extends ConnectionException{
+  static create() => new ConnectionNotOpened();
+  ConnectionNotOpened(): super('Connection not opened!');
+}
+
+class ConnectionOpened extends ConnectionException{
+  static create() => new ConnectionOpened();
+  ConnectionOpened(): super('Connection already opened!');
+}
+
+class ConnectionClosed extends ConnectionException{
+  static create() => new ConnectionClosed();
+  ConnectionClosed(): super('Connection already closed!');
+}
+
+class ConnectionErrored extends ConnectionException{
+  Exception extraError;
+  static create([e]) => new ConnectionErrored(e);
+  ConnectionErrored([this.extraError]): super('Connection errored out!');
+  String toString(){
+    var sx = super.toString();
+    var se = this.extraError.toString();
+    return (sx +"\n"+ se);
+  }
+}
+
 class NullDataException extends Exception{
   NullDataException(message): super(message);
 }
@@ -1262,7 +1298,9 @@ class FunctionalAtomic{
 
 class Middleware{
   Function _middleMan;
-  List _mwares;
+  List _mwares,_reversed;
+  bool _added = false;
+  bool _reverse = false;
 
   static create([n]) => new Middleware(n);
 
@@ -1272,9 +1310,15 @@ class Middleware{
     this.ware((d,next,end){ next(); });
   }
 
+  void reverseStacking(){
+    this._reverse = true;
+  }
+
+  bool get stackReversed => !!this._reverse;
+
   Future ware(Function nware(data,Function next,Function faction)){
     var n =0,comp = new Completer();
-    this._mwares.add((df,nx,ed){
+    var fnx = ((df,nx,ed){
         return new Future.sync((){
           return nware(df,nx,ed);
         })
@@ -1287,14 +1331,16 @@ class Middleware{
             return comp.completeError(f);
         });
     });
+    this._mwares.add(fnx);
     return comp.future;
   }
 
   dynamic _next(index,ndata,[bool kickout]){
+    var core = !!this.stackReversed ? this._reversed : this._mwares;
     index += 1;
     kickout = Funcs.switchUnless(kickout,false);
     if(!!kickout || index >= this.size) return this._middleMan(ndata);
-    var cur = this._mwares[index];
+    var cur = core[index];
     return cur(ndata,([nd]){
       var fx = Valids.exist(nd) ? nd : ndata;
       return this._next(index,fx,kickout);
@@ -1306,6 +1352,9 @@ class Middleware{
 
   dynamic emit(dynamic data){
     if(this._mwares.isEmpty) return null;
+    if(this.stackReversed){
+      this._reversed = this._mwares.reversed.toList();
+    }
     return this._next(-1,data);
   }
 

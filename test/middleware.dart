@@ -45,4 +45,10 @@ void main(){
   }).then(Funcs.tag('final run with'));
 
   ware.emit('alex');
+
+  //stack can be reversed in the list
+  ware.reverseStacking();
+
+  ware.emit('john');
+
 }
