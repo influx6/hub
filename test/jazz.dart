@@ -16,7 +16,7 @@ void main(){
       g.test('can i run async')
       .rackAsync('can i pass async',(d,nxt){  
         Expects.asserts(d,1);
-        nxt();  
+        nxt(2);  
       })
       .clockAsync('can i jug async',(d,nxt){  
         Expects.asserts(d,2);
@@ -26,16 +26,16 @@ void main(){
 
       g.test('can i use expects')
       .rack('check asserts',(d){
-        Expects.asserts(d,3);
+        Expects.asserts(d,2);
       }).emit(2);
 
     });
 
-    _.group('testing expects runs',(g){
+    _.group('testing truthy value',(g){
     
       g.test('can i use expects')
       .rack('check asserts',(d){
-        Expects.asserts(d,3);
+        Expects.truthy(d);
       }).emit(2);
 
     });

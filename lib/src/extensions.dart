@@ -1431,7 +1431,8 @@ class JazzAtom{
   JazzAtom rack(String desc,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
       return new Future.sync((){
-        var val = Funcs.dartApply(unit,d);
+        var m = []..addAll(d);
+        var val = Funcs.dartApply(unit,m);
         next();
         return val;
       });
@@ -1442,7 +1443,9 @@ class JazzAtom{
   JazzAtom rackAsync(String desc,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
       return new Future.sync((){
-        var m = []..addAll(d)..add(() => next());
+        var m = []..addAll(d)..add(([r]){
+          next([r]);
+        });
         var val = Funcs.dartApply(unit,m);
         return val;
       });
@@ -1455,7 +1458,7 @@ class JazzAtom{
       return new Future.sync((){
         var bit = 0;
         var comp = new Completer();
-        var m = []..addAll(d)..add((){ bit += 1; if(bit >= bits) return next(); });
+        var m = []..addAll(d)..add(([f]){ bit += 1; if(bit >= bits) return next([f]); });
         var val = Funcs.dartApply(unit,m);
         return comp.future;
       });
@@ -1467,7 +1470,8 @@ class JazzAtom{
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
       return new Future.sync((){
-        var val = Funcs.dartApply(unit,d);
+        var m = []..addAll(d);
+        var val = Funcs.dartApply(unit,m);
         next();
         return val;
       });
@@ -1483,7 +1487,7 @@ class JazzAtom{
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
       return new Future.sync((){
-        var m = []..addAll(d)..add(() => next());
+        var m = []..addAll(d)..add(([f]) => next([f]));
         var val = Funcs.dartApply(unit,m);
         return val;
       });
