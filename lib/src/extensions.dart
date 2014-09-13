@@ -1434,46 +1434,34 @@ class JazzAtom{
     });
   }
 
+  Function guardedFunction(List collection){
+    return (fn){
+        var comp = new Completer();
+        collection.add(comp.future);
+        return (([n]){
+          var val;          
+          try{
+            val = fn(n);
+          }catch(e){
+            return comp.completeError(e);
+          }
+          return comp.complete(val);
+        });
+      };
+  }
+
   JazzAtom rack(String desc,Function unit){
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future.sync((){
-        var m = []..addAll(d);
-        var val = Funcs.dartApply(unit,m);
-        next();
-        return val;
-      });
-    }));
-    return this;
-  }
+      var guards = [];
+      var guarded = this.guardedFunction(guards);
 
-  JazzAtom rackAsync(String desc,Function unit){
-    this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future.sync((){
-        var m = []..addAll(d)..add(([r]){
-          var rr = Valids.exist(r) ? [r] : null;
-          Funcs.dartApply(next,(Valids.exist(r) ? [rr] : [d]));
-        });
-        var val = Funcs.dartApply(unit,m);
-        return val;
-      });
-    }));
-    return this;
-  }
+      var m = []..addAll(d)..add(guarded);
 
-  JazzAtom tickAsync(String desc,int bits,Function unit){
-    this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future.sync((){
-        var bit = 0;
-        var comp = new Completer();
-        var m = []..addAll(d)..add(([r]){
-          bit += 1; 
-          if(bit >= bits){
-            var rr = Valids.exist(r) ? [r] : null;
-            Funcs.dartApply(next,(Valids.exist(r) ? [rr] : [d]));
-          }
-        });
-        var val = Funcs.dartApply(unit,m);
-        return comp.future;
+      guarded((j) => Funcs.dartApply(unit,j))(m);
+      next();
+
+      return Future.wait(guards).then((n){
+        return n;
       });
     }));
     return this;
@@ -1482,11 +1470,16 @@ class JazzAtom{
   JazzAtom clock(String desc,Function unit){
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future.sync((){
-        var m = []..addAll(d);
-        var val = Funcs.dartApply(unit,m);
-        next();
-        return val;
+      var guards = [];
+      var guarded = this.guardedFunction(guards);
+
+      var m = []..addAll(d)..add(guarded);
+
+      guarded((j) => Funcs.dartApply(unit,j))(m);
+      next();
+
+      return Future.wait(guards).then((n){
+        return n;
       });
     }),(jst){
       jst.meta['startTime'] = now;
@@ -1496,16 +1489,65 @@ class JazzAtom{
     return this;
   }
 
+
+  JazzAtom rackAsync(String desc,Function unit){
+    this._handleRack(desc,this._groupware.ware((d,next,end){
+      var guards = [];
+      var guarded = this.guardedFunction(guards);
+
+      var m = []..addAll(d)..add(([r]){
+        var rr = Valids.exist(r) ? [r] : null;
+        Funcs.dartApply(next,(Valids.exist(r) ? [rr] : [d]));
+      })..add(guarded);
+
+      guarded((j) => Funcs.dartApply(unit,j))(m);
+
+      return Future.wait(guards).then((n){
+        return n;
+      });
+    }));
+    return this;
+  }
+
+  JazzAtom tickAsync(String desc,int bits,Function unit){
+    this._handleRack(desc,this._groupware.ware((d,next,end){
+      var guards = [];
+      var guarded = this.guardedFunction(guards);
+
+      var bit = 1;
+      var m = []..addAll(d)..add(([r]){
+        bit += 1; 
+        if(bit >= bits){
+          var rr = Valids.exist(r) ? [r] : null;
+          Funcs.dartApply(next,(Valids.exist(r) ? [rr] : [d]));
+        }
+      })..add(guarded);
+
+      guarded((j) => Funcs.dartApply(unit,j))(m);
+
+      return Future.wait(guards).then((n){
+        return n;
+      });
+    }));
+    return this;
+  }
+
+
   JazzAtom clockAsync(String desc,Function unit){
     var now = new DateTime.now();
     this._handleRack(desc,this._groupware.ware((d,next,end){
-      return new Future.sync((){
-        var m = []..addAll(d)..add(([r]){
-            var rr = Valids.exist(r) ? [r] : null;
-            Funcs.dartApply(next,(Valids.exist(r) ? [rr] : [d]));
-        });
-        var val = Funcs.dartApply(unit,m);
-        return val;
+      var guards = [];
+      var guarded = this.guardedFunction(guards);
+
+      var m = []..addAll(d)..add(([r]){
+          var rr = Valids.exist(r) ? [r] : null;
+          Funcs.dartApply(next,(Valids.exist(r) ? [rr] : [d]));
+      })..add(guarded);
+
+      guarded((j) => Funcs.dartApply(unit,j))(m);
+
+      return Future.wait(guards).then((n){
+        return n;
       });
     }),(jst){
       jst.meta['startTime'] = now;
