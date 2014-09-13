@@ -1513,7 +1513,7 @@ class JazzAtom{
     this._handleRack(desc,this._groupware.ware((d,next,end){
       var guards = [];
       var guarded = this.guardedFunction(guards);
-
+      
       var bit = 1;
       var m = []..addAll(d)..add(([r]){
         bit += 1; 
