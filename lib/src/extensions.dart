@@ -45,23 +45,29 @@ class ConnectionErrored extends ConnectionException{
 
 
 class DualBind{
-  Function fn,gn,unbindfn;
+  Function _fn,_gn,_unbindfn;
 
   static create(ubn,[fn,gn]) => new DualBind(ubn,fn,gn);
 
-  DualBind(this.unbindfn,[this.fn,this.gn]);
+  DualBind(this._unbindfn,[this._fn,this._gn]);
+
+  void set fn(Function n) => this._fn = n;
+  void set gn(Function n) => this._gn = n;
+  void set unbindFn(Function n) => this._unbindfn = n;
 
   Function first([m]){
-    if(Valids.exist(this.fn)) return this.fn(m);
+    if(Valids.exist(this._fn)) 
+      return this._fn(m);
   }
 
   Function second([m]){
-    if(Valids.exist(this.gn)) return this.gn(m);
+    if(Valids.exist(this._gn)) 
+      return this._gn(m);
   }
 
   Function unbind(){
-    this.unbindfn(this);
-    this.fn = this.gn = null;
+    this._unbindfn(this);
+    this._fn = this._gn = null;
   }
 }
 

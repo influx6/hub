@@ -22,7 +22,7 @@ class Valids{
   static bool isBool(a) => a is bool;
   static bool isDate(a) => a is DateTime;
   static bool isObject(a) => a is Object;
-  static bool isOnlyObject(a) => !Valids.isString(a) && !Valids.isNumber(a) && !Valids.isCollection(a) && Valids.isObject(a);
+  static bool isOnlyObject(a) => !Valids.isBool(a) && !Valids.isString(a) && !Valids.isNumber(a) && !Valids.isCollection(a) && Valids.isObject(a);
   static bool isFunction(a) => a is Function;
   static bool isMap(a) => a is Map;
   static bool isList(a) => a is List;
