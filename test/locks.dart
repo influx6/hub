@@ -12,11 +12,11 @@ void main(){
     _.group('can i create locks',(g){
 
       g.test('create a lock and mutex')
-      .rack('is it a real lock',(f){
+      .rack('is it a real lock',(f,g){
         Expects.exist(f);
         Expects.isTrue(f is Locker);
       })
-      .rack('can locker create mutexs',(f){
+      .rack('can locker create mutexs',(f,g){
         var mut = f.createLock();
         var mutsafe = mut.safe;
         Expects.exist(mut);
@@ -28,7 +28,7 @@ void main(){
       .emit(Locker.create());
 
       g.test('can i lock using a mutex')
-      .rack('create two locks and check locks states',(r){
+      .rack('create two locks and check locks states',(r,g){
         var f = Locker.create();
         var m1 = f.createLock();
         var m2 = f.createLock();
@@ -42,7 +42,7 @@ void main(){
         Expects.isFalse(m1.owns);
         Expects.isTrue(m2.owns);
       })
-      .rack('create two locks and use singular locks',(r){
+      .rack('create two locks and use singular locks',(r,g){
         var f = Locker.create();
         f.enableSingular();
 

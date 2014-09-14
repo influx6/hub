@@ -686,6 +686,8 @@ class MapDecorator<T,K>{
     static MapDecorator useMap(Map<T,K> m) => new MapDecorator.use(m);
 
     static MapDecorator fromMap(Map<T,K> m) => new MapDecorator.from(m);
+    
+    static MapDecorator uniqueMap(Map<T,K> m) => new MapDecorator.unique(m);
       
     MapDecorator(): storage = new Map<T,K>();
 
@@ -771,6 +773,62 @@ class MapDecorator<T,K>{
     Map get core => this.storage;
 
     Map get clone => new Map.from(this.core);
+}
+
+class AtomicMap<T,K> extends MapDecorator{
+  final Distributor onRemove = Distributor.create('removed_values');
+  final Distributor onAdd = Distributor.create('new_values');
+  final Distributor onUpdate = Distributor.create('update_values');
+  final Distributor onKeyUpdate = Distributor.create('key_update_values');
+
+  static create() => new AtomicMap();
+
+  static useMap(Map<T,K> m) => new AtomicMap.use(m);
+
+  static fromMap(Map<T,K> m) => new AtomicMap.from(m);
+
+  static uniqueMap(Map<T,K> m) => new AtomicMap.unique(m);
+    
+  AtomicMap(): super();
+
+  AtomicMap.from(Map<T,K> a): super.from(a);
+
+  AtomicMap.use(Map<T,K> a): super.use(a);
+
+  AtomicMap.unique(Map<T,K> a): super.unique(a);
+
+  void add(String key,dynamic val){
+    if(this.has(key)) return null;
+    this.storage[key] = val;
+    this.onAdd.emit({'key':key,'value':val});
+  }
+
+  void update(String key,dynamic val){
+    if(this.has(key)){ 
+      this.onUpdate.emit({'key':key,'old':this.get(key),'new':val});
+      this.storage[key] = val; 
+      return null; 
+    }
+    else this.add(key,val);
+    return null;
+  }
+
+  void updateKey(String key,String newKey){
+    if(!this.has(key)) return null;
+    var val = this.get(key);
+    this.onKeyUpdate.emit({'old':key,'new':newkey});
+    this.destroy(key);
+    this.add(newKey,val);
+  }
+
+  dynamic destroy(String key){
+    if(!this.has(key)) return null; 
+    var v = this.get(key);
+    this.storage.remove(key);    
+    this.onRemove.emit({'key':key,'value':v });
+    return v;
+  }
+
 }
 
 class Counter{
