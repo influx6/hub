@@ -829,6 +829,10 @@ class AtomicMap<T,K> extends MapDecorator{
     return v;
   }
 
+  void flush(){
+    this.storage.forEach((f,k) => this.onRemove.emit({'key':f,'value':k}));
+    super.flush();
+  }
 }
 
 class Counter{
