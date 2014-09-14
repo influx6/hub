@@ -224,7 +224,7 @@ class WrapperLog{
 
   WrapperLog(){
     this._flip = Funcs.futureBind();
-    this._factori = Funcs.defferedDebugLog(this._flip);
+    this._factori = Funcs.messageLog(this._flip);
   }
 
   Function get make => this._factori;
