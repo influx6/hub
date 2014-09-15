@@ -669,13 +669,6 @@ class DisplayHook{
 
 }
 
-abstract class EventContract{
-  void bind(String name,Function n);
-  void bindOnce(String name,Function n);
-  void unbind(String name,Function n);
-  void unbindOnce(String name,Function n);
-}
-
 class QueryShell{
     Switch _active;
     Element root;

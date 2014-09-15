@@ -1,14 +1,30 @@
 part of hubutils;
 
+abstract class EventFunctionContract{
+  void bind(Function n);
+  void bindOnce(Function n);
+  void unbind(Function n);
+  void unbindOnce(Function n);
+}
+
+abstract class EventContract{
+  void bind(String name,Function n);
+  void bindOnce(String name,Function n);
+  void unbind(String name,Function n);
+  void unbindOnce(String name,Function n);
+}
+
 class NullDataException implements Exception{
   final message;
-  NullDataException(message);
+  NullDataException(this.message);
+  String toString() => "NullDataException: ${this.message}";
 }
 
 class BasicException implements Exception{
   final message;
   static create(m) => new BasicException(m);
   BasicException(String message);
+  String toString() => "BasicException: ${this.message}";
 }
 
 class ConnectionException implements Exception{
@@ -87,6 +103,7 @@ class MutexSafeLock extends MutexLock{
   static create(n) => new MutexSafeLock(n);
   MutexSafeLock(this._lock);
 
+  void blockd(dynamic n) => this._lock.blockd(n);
   dynamic get locked => this._lock.locked;
   dynamic get unlocked => this._lock.unlocked;
   bool get owns => this._lock.owns;
@@ -98,6 +115,7 @@ class MutexSafeLock extends MutexLock{
 }
 
 class MutexLockd extends MutexLock{
+  final Distributor blocks = Distributor.create('mutex-blocks-emit');
   final Distributor locked = Distributor.create('mutex-locked-emit');
   final Distributor unlocked = Distributor.create('mutex-unlocked-emit');
   Locker _lock;
@@ -111,6 +129,8 @@ class MutexLockd extends MutexLock{
 
   bool get isActive => this._lock != null;
   bool get owns => !!this._owns;
+
+  void blockd(dynamic n) => this.blocks.emit(n);
 
   void lock(){
     if(!this.isActive) return null;
@@ -144,6 +164,11 @@ class Locker{
 
   Locker();
 
+  void sendBlock(dynamic n){
+    if(Valids.notExist(_cur)) return null;
+    return this._cur.blockd(n);
+  }
+
   void disableSingular(){
     this._holdLock = false;
   }
@@ -152,8 +177,21 @@ class Locker{
     this._holdLock = true;
   }
 
+  bool get lockedDown => Valids.exist(this._cur);
   bool get singularLock => !!this._holdLock;
   bool get unlockable => !!this.singularLock && this._cur != null;
+
+  void lockfirst(){
+    var lk = Enums.first(this._locks);
+    if(Valids.exist(lk)) return lk.lock();
+    return null;
+  }
+
+  void locklast(){
+    var lk = Enums.last(this._locks);
+    if(Valids.exist(lk)) return lk.lock();
+    return null;
+  }
 
   MutexLock createLock(){
     var lk = MutexLockd.create(this);
@@ -1664,6 +1702,7 @@ class JazzGroups{
   }
 
   Future init(){
+    this._doneAtoms.clear();
     this._whenDone = new Completer();
     var wait = Future.wait(this._doneAtoms);
     wait.then((f) => this._whenDone.complete(null))

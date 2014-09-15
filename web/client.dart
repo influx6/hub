@@ -19,18 +19,18 @@ void main(){
     _.group('testing stripjs fragment',(g){
 
       g.test('can we use console')
-      .clock('adding fragment',(f){
+      .clock('adding fragment',(f,g){
         f.fragment('console');
         Expects.asserts(f.hasFragment('console'),true);
       })
-      .rack('removing fragment',(f){
+      .rack('removing fragment',(f,g){
         f.removeFragment('console');
         Expects.asserts(f.hasFragment('console'),false);
       })
       .emit(stripjs);
 
       g.test('can we use console.log')
-      .rack('adding log function',(f){
+      .rack('adding log function',(f,g){
         f.fragment('console');
         f.register('console','log');
         Expects.asserts(f.hasMethodFragment('console','log'),true);
