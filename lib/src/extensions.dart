@@ -164,6 +164,8 @@ class MutexLockd extends MutexLock{
 }
 
 class Locker{
+  final Distributor locked = Distributor.create('locker-locked-emit');
+  final Distributor unlocked = Distributor.create('locker-unlocked-emit');
   bool _holdLock = false;
   List _locks = new List<MutexLock>();
   MutexLock _cur;
@@ -213,6 +215,7 @@ class Locker{
     if(this._cur == l) return null;
     this._cur = l;
     l.owned();
+    this.locked.emit(true);
     this.unlockAll([l]);
   }
 
@@ -220,6 +223,7 @@ class Locker{
     if(this._locks.indexOf(lock) == -1) return null;
     if(this._cur != lock) return null;
     this._cur.disowned();
+    this.unlocked.emit(true);
     this._cur = null;
   }
 
@@ -231,6 +235,7 @@ class Locker{
       }
       f.disowned();
     });
+    this.unlocked.emit(true);
   }
 }
 
