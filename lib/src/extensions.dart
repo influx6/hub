@@ -187,6 +187,7 @@ class Locker{
     this._holdLock = true;
   }
 
+
   bool get lockedDown => Valids.exist(this._cur);
   bool get singularLock => !!this._holdLock;
   bool get unlockable => !!this.singularLock && this._cur != null;
