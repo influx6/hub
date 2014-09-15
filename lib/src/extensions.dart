@@ -87,7 +87,9 @@ class DualBind{
   }
 }
 
-abstract class MutexLock{
+abstract class MutexLock extends EventFunctionContract{
+  final Distributor blocks = Distributor.create('mutex-blocks-emit');
+
   dynamic get locked;
   dynamic get unlocked;
   bool get owns;
@@ -95,6 +97,11 @@ abstract class MutexLock{
   void unlock();
   void owned();
   void disowned();
+
+  void bind(Function n) => this.blocks.on(n);
+  void bindOnce(Function n) => this.blocks.onOnce(n);
+  void unbind(Function n) => this.blocks.off(n);
+  void unbindOnce(Function n) => this.blocks.offOnce(n);
 }
 
 class MutexSafeLock extends MutexLock{
@@ -112,10 +119,10 @@ class MutexSafeLock extends MutexLock{
   void unlock(){}
   void owned(){}
   void disowned(){}
+
 }
 
 class MutexLockd extends MutexLock{
-  final Distributor blocks = Distributor.create('mutex-blocks-emit');
   final Distributor locked = Distributor.create('mutex-locked-emit');
   final Distributor unlocked = Distributor.create('mutex-unlocked-emit');
   Locker _lock;
@@ -153,12 +160,13 @@ class MutexLockd extends MutexLock{
     this.unlocked.emit(true);
     this._owns = false;
   }
+
 }
 
 class Locker{
   bool _holdLock = false;
   List _locks = new List<MutexLock>();
-  MutexLocks _cur;
+  MutexLock _cur;
 
   static create() => new Locker();
 
@@ -199,13 +207,13 @@ class Locker{
     return lk;
   }
 
-  void lock(MutexLock lock){
+  void lock(MutexLock l){
     if(this.unlockable) return null;
-    if(this._locks.indexOf(lock) == -1) return null;
-    if(this._cur == lock) return null;
-    this._cur = lock;
-    lock.owned();
-    this.unlockAll([lock]);
+    if(this._locks.indexOf(l) == -1) return null;
+    if(this._cur == l) return null;
+    this._cur = l;
+    l.owned();
+    this.unlockAll([l]);
   }
 
   void unlock(MutexLock lock){
@@ -216,7 +224,7 @@ class Locker{
   }
 
   void unlockAll([List exs]){
-    if(!this.singularLock) this._cur = null;
+    if(this.unlockable) return null;
     this._locks.forEach((f){
       if(Valids.exist(exs)){
         if(exs.indexOf(f) != -1) return null;
@@ -1543,9 +1551,10 @@ class JazzAtom{
           try{
             val = fn(n);
           }catch(e){
-            return comp.completeError(e);
+            if(!comp.isCompleted) comp.completeError(e);
+            return null;
           }
-          return comp.complete(val);
+          if(!comp.isCompleted) comp.complete(val);
         });
       };
   }
@@ -1617,7 +1626,7 @@ class JazzAtom{
       var bit = 1;
       var m = []..addAll(d)..add(([r]){
         bit += 1; 
-        if(bit >= bits){
+        if(bit > bits){
           var rr = Valids.exist(r) ? [r] : null;
           Funcs.dartApply(next,(Valids.exist(r) ? [rr] : [d]));
         }
@@ -1702,11 +1711,12 @@ class JazzGroups{
   }
 
   Future init(){
-    this._doneAtoms.clear();
     this._whenDone = new Completer();
     var wait = Future.wait(this._doneAtoms);
-    wait.then((f) => this._whenDone.complete(null))
-      .catchError((e) => this._whenDone.complete(null));
+    wait.then((f) => this._whenDone.complete(null)).then((n){
+      this._doneAtoms.clear();
+    })
+    .catchError((e) => this._whenDone.complete(null));
     return wait.then((f){
       return { 
         'id':this.description, 
