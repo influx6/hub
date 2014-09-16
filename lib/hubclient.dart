@@ -371,8 +371,17 @@ class HtmlView extends JazzView{
   }
 
   void process(data){
-    /*this.insertPoint.children.clear();*/
     var gset = 0,cset = 0,gbuff = [], sbuff = [],ubuff = [];
+    var divs = [];
+
+    data.forEach((f){
+      var point = this.insertPoint.querySelector("[data-id='${f['id']}']");
+      var div = Valids.exist(point) ? point : new Element.tag('div');
+      div.dataset['id'] = f['id'];
+      divs.add(div);
+      this.insertPoint.append(div);
+    });
+
     JazzView.jazzIterator(data,(g,id){
       var gbuf = groupFragment;
       var tests = g['testTotal'],
@@ -428,11 +437,17 @@ class HtmlView extends JazzView{
 
        ubuff.add(buffer);
     },(){
+       var count = 0;
        gbuff.forEach((f){
-         this.insertPoint.append(new Element.html(f.toString()));
+         var owner = divs[count];
+         if(Valids.exist(owner)){
+           owner.children.clear();
+           owner.append(new Element.html(f.toString()));
+         }
+         count += 1;
        });
        gbuff.clear();
-       cset = gset = 0;
+       count = cset = gset = 0;
     },(fx){
       if(cset > sbuff.length) cset = sbuff.length - 1;
       var atoms = ubuff.join('\n');
@@ -1136,6 +1151,7 @@ final blinker = new Element.html('<div class="blinker"><span>Generating Tests...
 final error = new Element.html('<div class="bootError hidden"></div>');
 
 Function jazzUp(Function init){
+ webConsole.insertPoint.children.clear();
  window.document.body.append(blinker);
  window.document.body.append(error);
  var jz = Jazz.create();
