@@ -1151,6 +1151,7 @@ final blinker = new Element.html('<div class="blinker"><span>Generating Tests...
 final error = new Element.html('<div class="bootError hidden"></div>');
 
 Function jazzUp(Function init){
+ var ft;
  webConsole.insertPoint.children.clear();
  window.document.body.append(blinker);
  window.document.body.append(error);
@@ -1172,4 +1173,5 @@ Function jazzUp(Function init){
    });
  });
  webConsole.buttonClick.dispatchEvent(new Event('click'));
+ return jz.whenDone;
 }

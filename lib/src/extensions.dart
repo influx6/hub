@@ -88,7 +88,6 @@ class DualBind{
 }
 
 abstract class MutexLock extends EventFunctionContract{
-  final Distributor blocks = Distributor.create('mutex-blocks-emit');
 
   dynamic get locked;
   dynamic get unlocked;
@@ -123,6 +122,7 @@ class MutexSafeLock extends MutexLock{
 }
 
 class MutexLockd extends MutexLock{
+  final Distributor blocks = Distributor.create('mutex-blocks-emit');
   final Distributor locked = Distributor.create('mutex-locked-emit');
   final Distributor unlocked = Distributor.create('mutex-unlocked-emit');
   Locker _lock;
@@ -1722,7 +1722,9 @@ class JazzGroups{
     wait.then((f) => this._whenDone.complete(null)).then((n){
       this._doneAtoms.clear();
     })
-    .catchError((e) => this._whenDone.complete(null));
+    .catchError((e){
+      if(!this._whenDone.isCompleted) this._whenDone.complete(null);
+    });
     return wait.then((f){
       return { 
         'id':this.description, 
@@ -1741,6 +1743,7 @@ class JazzGroups{
 class Jazz{
   MapDecorator units;
   Distributor watchers;
+  Completer _tf;
 
   static Jazz create([Function n]){
     var jz = new Jazz();
@@ -1761,9 +1764,10 @@ class Jazz{
   }
 
   int get size => this.units.core.length;
+  Future get whenDone => this._tf.future;
 
   Future init(){
-    var list = [], funits = new Completer();
+    var list = [], funits = this._tf = new Completer();
     Enums.eachAsync(this.units.core,(e,i,o,fn){
       list.add(e.init());
       return fn(null);
